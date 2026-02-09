@@ -1,0 +1,546 @@
+:root {
+  --bg-primary: #0a0a0b;
+  --bg-secondary: #121214;
+  --bg-tertiary: #1a1a1d;
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-bg-hover: rgba(255, 255, 255, 0.06);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #fafafa;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --accent-blue: #3b82f6;
+  --accent-blue-glow: rgba(59, 130, 246, 0.4);
+  --accent-green: #22c55e;
+  --accent-green-glow: rgba(34, 197, 94, 0.4);
+  --accent-red: #ef4444;
+  --accent-red-glow: rgba(239, 68, 68, 0.4);
+  --accent-amber: #f59e0b;
+  --bog-orange: #ff6b00;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+   
+body {
+  font-family: Inter, "Noto Sans Georgian", sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 50% at 20% 20%, rgba(59, 130, 246, 0.15), transparent 50%),
+              radial-gradient(ellipse 60% 40% at 80% 80%, rgba(34, 197, 94, 0.1), transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 4000;
+  background: rgba(10, 10, 11, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.panel {
+  width: min(1000px, 98vw);
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+  /* ეს აიძულებს მარცხენა და მარჯვენა სვეტებს იყვნენ თანაბარი სიმაღლის */
+  align-items: stretch; 
+}
+@media (max-width: 900px) {
+  .panel { grid-template-columns: 1fr; max-height: 95vh; overflow-y: auto; }
+}
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.2s ease;
+  /* აიძულებს ბარათს შეავსოს მთელი სიმაღლე */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.card:hover {
+  background: var(--card-bg-hover);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.brand {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+  box-shadow: 0 8px 24px var(--accent-blue-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+h1 {
+  font-size: 32px;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.subtitle {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-size: 14px;
+  margin-top: 6px;
+}
+.info-box-title {
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.btn {
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 12px; /* აუცილებელი დაცილება ღილაკებს შორის */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* სპეციალური სტილი "Quick Play" და "Find a Match" ღილაკებისთვის */
+.btn.matchmaking {
+  background: linear-gradient(135deg, var(--accent-amber), #d97706);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+  color: #0a0a0b;
+}
+
+.btn.secondary {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  color: white;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+.field {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  background: var(--bg-tertiary);
+  padding: 14px 16px;
+  color: white;
+  outline: none;
+  font-size: 15px;
+}
+.label {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 8px;
+  margin: 15px 0;
+}
+.avatar-option {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  transition: 0.2s;
+}
+.avatar-option.selected {
+  border-color: var(--accent-blue);
+  background: var(--accent-blue-glow);
+  transform: scale(1.1);
+}
+.floating-panel {
+  position: absolute;
+  z-index: 1500;
+  background: rgba(10, 10, 11, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  display: none;
+  flex-direction: column;
+  resize: both;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: move;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--card-border);
+  user-select: none;
+}
+.panel-title {
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.panel-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+.minimized { height: 46px !important; min-height: 46px !important; resize: none; }
+.minimized .panel-content { display: none; }
+#ui { top: 16px; left: 16px; width: 300px; min-width: 250px; min-height: 180px; }
+/* ლიდერბორდის პანელის ზომა და პოზიცია */
+#scoreboard {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 280px;
+    height: 350px; /* საწყისი სიმაღლე */
+    min-width: 200px;
+    min-height: 150px;
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    /* ესენი აბრუნებს ზომის ცვლილების ფუნქციას */
+    resize: both;
+    overflow: hidden; 
+}
+
+/* რომ სქროლი ისევ შავი და ლამაზი დარჩეს შიგნით */
+#scoreboard .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* სქროლის შავი დიზაინი შიდა ლიდერბორდისთვის */
+#scoreboard .panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+#scoreboard .panel-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+#scoreboard .panel-content::-webkit-scrollbar-thumb {
+    background: var(--accent-amber);
+    border-radius: 10px;
+}#chat-panel { bottom: 16px; left: 16px; width: 320px; height: 260px; min-width: 280px; min-height: 150px; }
+.player-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+.player-info { display: flex; align-items: center; gap: 8px; }
+#chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.chat-msg {
+  background: rgba(255,255,255,0.05);
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: white;
+  word-break: break-word;
+}
+.chat-msg b { color: var(--accent-blue); }
+#chat-input-container {
+  display: flex;
+  border-top: 1px solid var(--card-border);
+  align-items: center;
+  background: var(--bg-tertiary);
+}
+#emoji-picker {
+  position: absolute;
+  bottom: 50px;
+  left: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  padding: 8px;
+  border-radius: 8px;
+  display: none;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  z-index: 2000;
+  box-shadow: var(--shadow-lg);
+}
+#container { height: 100vh; width: 100vw; position: relative; }
+   
+#street-view {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 1;
+}
+   
+#map-wrapper {
+    position: absolute;
+    bottom: 20px;
+    right: 60px !important; 
+    width: 320px;
+    height: 220px;
+    z-index: 100;
+    border: 2px solid var(--accent-amber);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    
+    /* ვამატებთ ცალკე opacity-ს მთლიანი ბლოკისთვის */
+    opacity: 0.6 !important; 
+    
+    /* ფონიც დავტოვოთ ოდნავ გამჭვირვალე */
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    
+    transition: all 0.3s ease;
+}
+
+/* როცა მაუსს მიიტან, რუკა "გაცოცხლდეს" და გახდეს 100%-ით მკვეთრი */
+#map-wrapper:hover {
+    opacity: 1 !important;
+}
+#map-wrapper:hover {
+  width: 1170px;
+  height: 877px;
+  opacity: 1;
+}
+#map { width: 100%; height: 100%; }
+#result-popup, #final-screen {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  padding: 28px;
+  border-radius: var(--radius-xl);
+  z-index: 5000;
+  text-align: center;
+  width: min(450px, 90vw);
+  box-shadow: var(--shadow-lg);
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.premium-donate-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--card-border);
+  text-align: center;
+}
+.bog-premium-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #ff6b00, #ff8800);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 16px;
+  font-weight: 900;
+  font-size: 15px;
+  text-decoration: none;
+  position: relative;
+  animation: bogPulse 3s infinite;
+  transition: all 0.3s ease;
+}
+@keyframes bogPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.6); }
+  70% { box-shadow: 0 0 0 20px rgba(255, 107, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0); }
+}
+.firework {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  animation: explode 1.2s ease-out forwards;
+}
+@keyframes explode {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(35); opacity: 0; }
+}
+.global-rank {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--card-border);
+}
+.global-rank:hover {
+  background: var(--card-bg-hover);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.global-rank .rank-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.global-rank .rank-num {
+  font-weight: 800;
+  color: var(--accent-amber);
+  min-width: 40px;
+  text-align: right;
+}
+.global-rank .player-avatar {
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+}
+.global-rank .crown {
+  font-size: 16px;
+  color: #ffd700; /* gold */
+  text-shadow: 0 0 4px rgba(255, 215, 0, 0.5); /* glow */
+}
+.global-rank .score {
+  font-weight: 800;
+  color: var(--accent-green);
+}
+/* ლიდერბორდის სუფთა და კომპაქტური სტილი */
+.global-rank {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.rank-num {
+    color: var(--text-muted);
+    margin-right: 12px;
+    width: 25px;
+}
+
+.player-name {
+    color: #fff;
+    flex: 1;
+}
+
+.player-score {
+    color: var(--accent-green);
+    font-variant-numeric: tabular-nums;
+}
+
+/* პირველი ადგილისთვის პატარა გვირგვინის ეფექტი */
+.global-rank:first-child .player-name::before {
+    content: '👑 ';
+    font-size: 14px;
+}
+/* ლიდერბორდის კონტეინერი */
+.global-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    /* აძლევს სიას საშუალებას აითვისოს თავისუფალი ადგილი */
+    flex: 1;
+    overflow-y: auto !important;
+    padding-right: 8px;
+    /* მინიმალური სიმაღლე, რომ ლიდერბორდი პატარა არ გამოჩნდეს */
+    min-height: 450px; 
+}
+
+/* სქროლის შავი და ოქროსფერი დიზაინი */
+.global-list-container::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.global-list-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 10px;
+}
+
+.global-list-container::-webkit-scrollbar-thumb {
+    background: var(--accent-amber) !important;
+    border-radius: 10px;
+}
+
+/* თითოეული მოთამაშის ხაზი */
+.global-rank {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03); /* ძალიან ნაზი ფონი */
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.rank-text {
+    color: #ffffff;
+}
+
+.score-text {
+    color: #22c55e; /* მწვანე ქულა */
+    font-weight: 900;
+}
