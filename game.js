@@ -102,6 +102,34 @@ async function quickPlay(){
   joinRoom(roomId);
 }
 
+// თამაშის დაწყებისას
+function enterGameMode() {
+  document.body.classList.add('game-active');
+  // თუ გინდა სხვა რამე ცვლილება UI-სთვის
+}
+
+// თამაშიდან გამოსვლისას (მაგ. exitGame ფუნქციაში)
+function exitGameMode() {
+  document.body.classList.remove('game-active');
+}
+
+// ახლა შეცვალე joinRoom და exitGame ფუნქციები
+
+async function joinRoom(id) {
+  // ... არსებული კოდი ...
+  
+  $("overlay").style.display = "none";
+  $("container").style.display = "block";
+  
+  enterGameMode();   // ← ახალი ხაზი
+}
+
+function exitGame() {
+  location.reload();   // ან თუ სხვა გამოსვლის ლოგიკა გაქვს
+  
+  exitGameMode();      // ← ახალი ხაზი (თუ არ გამოიყენება reload)
+}
+
 async function findMatch() {
   if(!mapsReady || !userData) return;
   nickname = $("nickname").value || "Player";
@@ -455,4 +483,5 @@ async function showFinalHistoryMap() {
     
     map.fitBounds(bounds);
 }
+
 
