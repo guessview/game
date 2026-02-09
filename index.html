@@ -15,52 +15,79 @@
 </head>
 <body>
   <!-- Private Room Lobby Panel (WorldGuessr-ის სტილში) -->
-<div id="private-lobby" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000; color:white; font-family:Inter, sans-serif; align-items:center; justify-content:center;">
-  <div style="background:#1a1a1a; border-radius:16px; padding:32px; max-width:500px; width:90%; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-    
-    <h2 style="margin:0 0 20px; font-size:28px; color:#4ade80;">
-      YOUR PARTY (<span id="lobby-rounds">15</span> ROUNDS)
-    </h2>
-
-    <div style="margin-bottom:20px; font-size:16px; color:#9ca3af;">
-      Map: <span id="lobby-map">World</span>
-    </div>
-
-    <div style="display:flex; gap:16px; justify-content:center; margin-bottom:24px; flex-wrap:wrap;">
-      <div style="background:#2a2a2a; padding:12px 20px; border-radius:12px; font-weight:600;">
-        Game Code: <span id="lobby-code" style="color:#60a5fa; user-select:all;">-----</span>
-        <button onclick="copyGameCode()" style="margin-left:8px; background:#3b82f6; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer;">Copy</button>
+  <div id="private-lobby" style="display:none; position:fixed; inset:0; background: linear-gradient(to bottom, #1a1a1a, #0a0a0a); z-index:2000; color:white; font-family:Inter, sans-serif; align-items:center; justify-content:center;">
+    <div style="background:#1e293b; border-radius:16px; padding:32px; max-width:500px; width:90%; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="margin:0 0 20px; font-size:28px; color:#fbbf24;">
+        YOUR PARTY (<span id="lobby-rounds">5</span> ROUNDS)
+      </h2>
+      <div style="margin-bottom:20px; font-size:16px; color:#9ca3af;">
+        Map: <span id="lobby-map">World</span>
       </div>
-      <button onclick="editPrivateOptions()" style="background:#6b7280; border:none; color:white; padding:12px 20px; border-radius:12px; font-weight:600; cursor:pointer;">
-        Edit Options
+      <div style="display:flex; gap:16px; justify-content:center; margin-bottom:24px; flex-wrap:wrap;">
+        <div style="background:#2a2a2a; padding:12px 20px; border-radius:12px; font-weight:600;">
+          Game Code: <span id="lobby-code" style="color:#fbbf24; letter-spacing:1px; user-select:all;">-----</span>
+          <button onclick="copyGameCode()" style="margin-left:8px; background:#fbbf24; border:none; color:black; padding:6px 12px; border-radius:6px; cursor:pointer;">Copy</button>
+        </div>
+        <button onclick="editPrivateOptions()" style="background:#4ade80; border:none; color:black; padding:12px 20px; border-radius:12px; font-weight:600; cursor:pointer;">
+          Edit Options
+        </button>
+      </div>
+      <!-- მოთამაშეების სია -->
+      <div id="lobby-players" style="margin:24px 0; min-height:100px;"></div>
+      <!-- სტატუსი -->
+      <div id="lobby-status" style="font-size:16px; color:#f87171; margin:16px 0;">
+        1 more player needed to start
+      </div>
+      <!-- Start ღილაკი -->
+      <button id="lobby-start-btn" disabled style="background:#22c55e; color:black; border:none; padding:16px 40px; font-size:18px; font-weight:bold; border-radius:12px; cursor:not-allowed; width:100%;">
+        Start Game
       </button>
     </div>
-
-    <!-- მოთამაშეების სია -->
-    <div id="lobby-players" style="margin:24px 0; min-height:100px;">
-      <!-- დინამიურად შეივსება JS-ით -->
-    </div>
-
-    <!-- სტატუსი -->
-    <div id="lobby-status" style="font-size:16px; color:#f87171; margin:16px 0;">
-      1 more player needed to start
-    </div>
-
-    <!-- Start ღილაკი (ჩართულია როცა საკმარისი მოთამაშეა) -->
-    <button id="lobby-start-btn" disabled style="background:#22c55e; color:black; border:none; padding:16px 40px; font-size:18px; font-weight:bold; border-radius:12px; cursor:not-allowed; width:100%;">
-      Start Game
-    </button>
-
   </div>
-</div>
-  
+
+  <!-- Edit Options Popup -->
+  <div id="edit-options-popup" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center;">
+    <div style="background:#1e293b; border-radius:16px; padding:32px; max-width:400px; width:90%; color:white;">
+      <h3 style="margin:0 0 20px; font-size:24px; color:#fbbf24;">Edit Options</h3>
+
+      <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Number of rounds</label>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+        <button onclick="changeOption('rounds', -1)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">-</button>
+        <input id="options-rounds" type="number" value="5" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; text-align:center; width:60px;" min="1" max="50">
+        <button onclick="changeOption('rounds', 1)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">+</button>
+      </div>
+
+      <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Time per round (seconds)</label>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+        <button onclick="changeOption('time', -10)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">-</button>
+        <input id="options-time" type="number" value="30" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; text-align:center; width:60px;" min="10" max="300" step="10">
+        <button onclick="changeOption('time', 10)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">+</button>
+      </div>
+
+      <label style="display:flex; align-items:center; gap:12px; margin-bottom:20px; font-size:16px; color:#9ca3af;">
+        <input id="options-no-move" type="checkbox" style="width:20px; height:20px;">
+        No moving, panning, zooming
+      </label>
+
+      <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Map</label>
+      <select id="options-map" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; width:100%; margin-bottom:20px;">
+        <option value="World">World</option>
+        <option value="Europe">Europe</option>
+        <option value="Asia">Asia</option>
+        <option value="America">America</option>
+        <option value="Georgia">Georgia</option>
+      </select>
+
+      <button onclick="savePrivateOptions()" style="background:#4ade80; border:none; color:black; padding:12px; border-radius:12px; width:100%; font-weight:600; cursor:pointer;">Save</button>
+    </div>
+  </div>
+
   <div id="overlay">
     <!-- ენის გადამრთველი -->
     <div id="lang-switcher">
       <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
       <button class="lang-btn" data-lang="ka" onclick="setLanguage('ka')">KA</button>
     </div>
-
     <div class="panel">
       <div class="card">
         <div class="brand">
@@ -70,17 +97,17 @@
             <div class="subtitle" data-i18n="app_subtitle">Street View Multiplayer — 1 წუთი გაქვს რუქაზე გამოსაცნობად.</div>
           </div>
         </div>
-      
+     
         <div class="label" data-i18n="select_avatar">აირჩიე ავატარი</div>
         <div class="avatar-grid" id="avatar-selector"></div>
         <div id="auth-block">
           <button class="btn" onclick="loginWithGoogle()" data-i18n="login_google">Google-ით შესვლა</button>
         </div>
-      
+     
         <div id="post-auth" style="display:none;">
           <div class="label" data-i18n="nickname_label">მოთამაშის სახელი</div>
           <input class="field" id="nickname" placeholder="მაგ: Ivane" maxlength="15" data-i18n-placeholder="nickname_placeholder" />
-        
+       
           <div class="menu-buttons">
             <button onclick="quickPlay()" class="btn matchmaking">
                 <span>🎮</span> <span data-i18n="quick_play">Quick Play</span>
@@ -88,27 +115,14 @@
             <button onclick="findMatch()" class="btn matchmaking">
                 <span>🔍</span> <span data-i18n="find_match">Find a Match (Join)</span>
             </button>
-          </div>
-
-          <!-- Private Room + რაუნდების არჩევა -->
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
             <button onclick="createPrivateRoom()" class="btn secondary">
                 <span>🔒</span> <span data-i18n="private_room">Private Room</span>
             </button>
-
-            <label style="color: #ccc; font-size: 14px; white-space: nowrap;" data-i18n="rounds_count">რაუნდების რაოდენობა:</label>
-            <select id="private-rounds-select" style="padding: 6px 10px; background: #222; color: white; border: 1px solid #555; border-radius: 6px; font-size: 14px; min-width: 70px;">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="15">15</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-            </select>
           </div>
-
+       
           <input class="field" id="room-code-input" placeholder="კოდი მეგობრისგან (მაგ: A2K9XZ)" style="margin-top:10px;" data-i18n-placeholder="room_code_placeholder" />
           <button class="btn secondary" onclick="joinPrivateRoom()" data-i18n="join_code">შესვლა კოდით</button>
-        
+       
           <button class="btn bad" style="margin-top:20px; opacity:0.6;" onclick="logout()" data-i18n="logout">გამოსვლა</button>
           <div class="premium-donate-section">
             <p style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 15px;" data-i18n="like_game">მოგწონს თამაში? ❤️</p>
@@ -118,7 +132,6 @@
           </div>
         </div>
       </div>
-
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <div class="card" style="flex: 1; display: flex; flex-direction: column;">
           <div style="font-weight: 800; margin-bottom: 12px; color: var(--accent-amber); display: flex; align-items: center; gap: 8px;" data-i18n="global_top">
@@ -126,7 +139,7 @@
           </div>
           <div id="global-list" style="overflow-y: auto; max-height: 250px;" data-i18n="loading">ჩაიტვირთება...</div>
         </div>
-      
+     
         <div class="card">
           <div class="info-box-title" data-i18n="how_to_play">📖 როგორ მუშაობს</div>
           <div class="subtitle" style="margin:0; font-size:13px;" data-i18n="how_to_play_desc">
@@ -139,7 +152,6 @@
       </div>
     </div>
   </div>
-
   <div id="ui" class="floating-panel">
     <div class="panel-header">
       <div class="panel-title" data-i18n="status">⏱️ სტატუსი</div>
@@ -150,19 +162,18 @@
           <span data-i18n="room_code">კოდი</span>: <span id="room-code-text" style="letter-spacing:1px;"></span>
       </div>
       <div id="timer" style="font-size: 38px; font-weight: 900; text-align: center; color: var(--accent-amber); margin-bottom: 10px;">01:00</div>
-   
+  
       <button class="btn good" id="manual-start-btn" style="display:none; margin-bottom:10px;" onclick="manualGameStart()" data-i18n="start_game">🚀 თამაშის დაწყება</button>
-   
+  
       <button class="btn good" id="guess-btn" onclick="userSubmit(false)" disabled data-i18n="submit_guess">გამოცნობა</button>
-   
+  
       <div id="waiting-msg" style="display:none; text-align:center; color:var(--accent-blue); margin-top:12px; font-weight:700;" data-i18n="waiting">⏳ ველოდებით...</div>
-   
+  
       <button class="btn bad" style="padding:6px; font-size:11px; margin-top:12px; opacity: 0.8;" onclick="exitGame()" data-i18n="exit">გასვლა</button>
-   
+  
       <div id="round-display" style="text-align:center; margin-top:10px; font-size:13px; color:gray;" data-i18n="round">რაუნდი: 1 / 15</div>
     </div>
   </div>
-
   <div id="scoreboard" class="floating-panel">
     <div class="panel-header">
       <div class="panel-title" data-i18n="players">🏆 მოთამაშეები</div>
@@ -170,7 +181,6 @@
     </div>
     <div class="panel-content" id="score-list"></div>
   </div>
-
   <div id="chat-panel" class="floating-panel">
     <div class="panel-header">
       <div class="panel-title" data-i18n="chat">💬 ჩატი</div>
@@ -183,13 +193,11 @@
       <input id="chat-input" placeholder="დაწერე..." style="flex:1; background:transparent; border:none; color:white; padding:12px; outline:none;" onkeydown="if(event.key==='Enter') sendChatMessage()" data-i18n-placeholder="type_message" />
     </div>
   </div>
-
   <div id="result-popup">
     <h3 data-i18n="location_found">ლოკაცია ნაპოვნია!</h3>
     <h2 id="res-score" style="margin:15px 0; color:var(--accent-green);">+0 ქულა</h2>
     <button class="btn secondary" onclick="document.getElementById('result-popup').style.display='none'" data-i18n="close">დახურვა</button>
   </div>
-
   <div id="final-screen">
     <div class="card" style="width:100%;">
       <h1 style="color:var(--accent-amber);" data-i18n="game_finished">🏁 თამაში დასრულდა!</h1>
@@ -201,16 +209,12 @@
       </div>
     </div>
   </div>
-
   <div id="container" style="display:none;">
     <div id="street-view"></div>
     <div id="map-wrapper"><div id="map"></div></div>
   </div>
-
   <script src="i18n.js"></script>
   <script src="game.js"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2RW92fLioq_fTquHZgZcj5MJ3izDLA10&callback=onGoogleMapsLoaded&loading=async" async defer></script>
 </body>
 </html>
-
-
