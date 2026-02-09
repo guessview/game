@@ -17,10 +17,14 @@
 </head>
 <body>
   
-<div id="lang-switcher" class="lang-visible-only-in-menu">
-  <button class="lang-btn active" data-lang="en">EN</button>
-  <button class="lang-btn" data-lang="ka">KA</button>
-</div>
+#lang-switcher {
+  display: flex; /* ნაგულისხმევად ჩანს */
+}
+
+/* თამაშის რეჟიმში დავმალოთ */
+body.game-active #lang-switcher {
+  display: none !important;
+}
   
 <div id="overlay">
   <div class="panel">
@@ -159,4 +163,5 @@
 </body>
 
 </html>
+
 
