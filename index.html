@@ -14,7 +14,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app-check.js"></script>
 </head>
 <body>
-
   <div id="overlay">
     <!-- ენის გადამრთველი -->
     <div id="lang-switcher">
@@ -49,11 +48,24 @@
             <button onclick="findMatch()" class="btn matchmaking">
                 <span>🔍</span> <span data-i18n="find_match">Find a Match (Join)</span>
             </button>
+          </div>
+
+          <!-- Private Room + რაუნდების არჩევა -->
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
             <button onclick="createPrivateRoom()" class="btn secondary">
                 <span>🔒</span> <span data-i18n="private_room">Private Room</span>
             </button>
+
+            <label style="color: #ccc; font-size: 14px; white-space: nowrap;" data-i18n="rounds_count">რაუნდების რაოდენობა:</label>
+            <select id="private-rounds-select" style="padding: 6px 10px; background: #222; color: white; border: 1px solid #555; border-radius: 6px; font-size: 14px; min-width: 70px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+            </select>
           </div>
-        
+
           <input class="field" id="room-code-input" placeholder="კოდი მეგობრისგან (მაგ: A2K9XZ)" style="margin-top:10px;" data-i18n-placeholder="room_code_placeholder" />
           <button class="btn secondary" onclick="joinPrivateRoom()" data-i18n="join_code">შესვლა კოდით</button>
         
@@ -66,6 +78,7 @@
           </div>
         </div>
       </div>
+
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <div class="card" style="flex: 1; display: flex; flex-direction: column;">
           <div style="font-weight: 800; margin-bottom: 12px; color: var(--accent-amber); display: flex; align-items: center; gap: 8px;" data-i18n="global_top">
@@ -97,15 +110,15 @@
           <span data-i18n="room_code">კოდი</span>: <span id="room-code-text" style="letter-spacing:1px;"></span>
       </div>
       <div id="timer" style="font-size: 38px; font-weight: 900; text-align: center; color: var(--accent-amber); margin-bottom: 10px;">01:00</div>
-    
+   
       <button class="btn good" id="manual-start-btn" style="display:none; margin-bottom:10px;" onclick="manualGameStart()" data-i18n="start_game">🚀 თამაშის დაწყება</button>
-    
+   
       <button class="btn good" id="guess-btn" onclick="userSubmit(false)" disabled data-i18n="submit_guess">გამოცნობა</button>
-    
+   
       <div id="waiting-msg" style="display:none; text-align:center; color:var(--accent-blue); margin-top:12px; font-weight:700;" data-i18n="waiting">⏳ ველოდებით...</div>
-    
+   
       <button class="btn bad" style="padding:6px; font-size:11px; margin-top:12px; opacity: 0.8;" onclick="exitGame()" data-i18n="exit">გასვლა</button>
-    
+   
       <div id="round-display" style="text-align:center; margin-top:10px; font-size:13px; color:gray;" data-i18n="round">რაუნდი: 1 / 15</div>
     </div>
   </div>
@@ -154,7 +167,6 @@
     <div id="map-wrapper"><div id="map"></div></div>
   </div>
 
-  <!-- ენის მართვის სკრიპტი (შექმენი ცალკე ფაილი i18n.js) -->
   <script src="i18n.js"></script>
   <script src="game.js"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2RW92fLioq_fTquHZgZcj5MJ3izDLA10&callback=onGoogleMapsLoaded&loading=async" async defer></script>
