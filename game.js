@@ -1,4 +1,4 @@
-// game.js - საბოლოო და სრულყოფილი ვერსია (ყველა ფიქსით და დაზღვევით)
+// game.js - გასწორებული და ოპტიმიზებული ვერსია (3+ მოთამაშის ფიქსით)
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtaqmlhkj414tmdchbZQv2GOlLB74HsZQ",
@@ -95,50 +95,27 @@ async function quickPlay(){
   if(!mapsReady || !userData) return;
   nickname = $("nickname").value || "Player";
   localStorage.setItem("gamocnobie_nick_" + userData.uid, nickname);
-  
-  // ყოველთვის იქმნება სრულიად ახალი ID
   const newRoomId = "QUICK_" + Math.random().toString(36).substring(2,10).toUpperCase();
   roomId = newRoomId;
-
-  // ბაზაში იქმნება სუფთა ჩანაწერი
-  await db.ref(`rooms/${roomId}/meta`).set({ 
-      matchmaking: true, 
-      createdAt: Date.now(), 
-      phase: "idle" 
-  });
-
+  await db.ref(`rooms/${roomId}/meta`).set({ matchmaking: true, createdAt: Date.now(), phase: "idle" });
   joinRoom(roomId);
 }
 
-// ახალი ფუნქცია Find a Match (Join)
 async function findMatch() {
   if(!mapsReady || !userData) return;
   nickname = $("nickname").value || "Player";
   localStorage.setItem("gamocnobie_nick_" + userData.uid, nickname);
-  
   const snap = await db.ref("rooms").once("value");
   const rooms = snap.val() || {};
   const now = Date.now();
-  
-  // ვეძებთ ოთახს, რომელიც არის საჯარო, აქვს ადგილი და ბოლო 10 წუთში შეიქმნა
   let target = Object.keys(rooms).find(id => {
       const r = rooms[id];
-      return r.meta?.matchmaking && 
-             Object.keys(r.players || {}).length < 6 && 
-             r.meta?.phase !== "finished" &&
-             (now - (r.meta?.createdAt || 0)) < 600000;
+      return r.meta?.matchmaking && Object.keys(r.players || {}).length < 6 && r.meta?.phase !== "finished" && (now - (r.meta?.createdAt || 0)) < 600000;
   });
-  
   if (!target) {
-    // თუ ვერ ვიპოვეთ, ვქმნით ახალ "MATCH_" აიდის
     target = "MATCH_" + Math.random().toString(36).substring(2,8).toUpperCase();
-    await db.ref(`rooms/${target}/meta`).set({ 
-        matchmaking: true, 
-        createdAt: now, 
-        phase: "idle" 
-    });
+    await db.ref(`rooms/${target}/meta`).set({ matchmaking: true, createdAt: now, phase: "idle" });
   }
-  
   joinRoom(target);
 }
 
@@ -156,13 +133,10 @@ function joinPrivateRoom(){ const code = $("room-code-input").value.toUpperCase(
 async function joinRoom(id){
   roomId = id; nickname = $("nickname").value || "Player";
   $("chat-messages").innerHTML = "";
-  
   await db.ref(`rooms/${roomId}/players/${userData.uid}`).set({ name: nickname, avatar: selectedAvatar, points: 0, uid: userData.uid });
   db.ref(`rooms/${roomId}/players/${userData.uid}`).onDisconnect().remove();
-  
   $("overlay").style.display = "none"; $("container").style.display = "block";
   $("ui").style.display = "flex"; $("scoreboard").style.display = "flex"; $("chat-panel").style.display = "flex";
-  
   const roomMeta = await db.ref(`rooms/${roomId}/meta`).once('value');
   if(roomMeta.exists() && roomMeta.val().matchmaking === false) {
       $('room-code-display').style.display = 'block';
@@ -218,7 +192,7 @@ function bindListeners(){
       $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
   });
 
-  // აი ეს არის მთავარი დამატება, რომელიც 3+ მოთამაშეზე ჭედვას შველის:
+  // ავტომატური გადასვლა 3+ მოთამაშეზე
   db.ref(`rooms/${roomId}/game/guesses`).on("value", async (snap) => {
     if (phase !== "guess") return;
     const guesses = snap.val() || {};
@@ -228,18 +202,10 @@ function bindListeners(){
     const pCount = Object.keys(players).length;
 
     if (gCount >= pCount && pCount > 0) {
-      // მხოლოდ პირველი მოთამაშე ააქტიურებს გადასვლას, რომ დუბლირება არ მოხდეს
       if (Object.keys(players)[0] === userData.uid) {
         db.ref(`rooms/${roomId}/game/meta`).update({ phase: "reveal", deadline: Date.now() + 6000 });
       }
     }
-  });
-}
-
-  db.ref(`rooms/${roomId}/chat`).on("child_added", snap => {
-      const m = snap.val();
-      $("chat-messages").innerHTML += `<div class="chat-msg"><span>${m.avatar || ''}</span> <b>${m.user}:</b> ${m.text}</div>`;
-      $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
   });
 }
 
@@ -292,23 +258,14 @@ setInterval(() => {
 async function ensureGame() {
   const snap = await db.ref(`rooms/${roomId}/game/meta`).once("value");
   const roomMeta = await db.ref(`rooms/${roomId}/meta`).once("value");
-  const data = snap.val() || {};
-
-  // თუ ფაზა არის "finished" ან მონაცემები საერთოდ არ არსებობს
-  if (!snap.exists() || data.phase === "finished") {
-      // ველოდებით 1 წამს, რომ ბაზა დაასინქრონდეს
+  if (!snap.exists() || snap.val().phase === "finished") {
       setTimeout(async () => {
-          if (roomMeta.val().matchmaking === true) {
-              // Quick Play-ს დროს ავტომატურად ვასუფთავებთ და ვიწყებთ
-              await restartGame(); 
-              startRound(1);
-          } else {
-              // პრივატულში უბრალოდ ვასუფთავებთ და ველოდებით ღილაკს
-              await restartGame();
-          }
+          await restartGame();
+          if (roomMeta.val().matchmaking === true) startRound(1);
       }, 1000);
   }
 }
+
 async function manualGameStart() {
     await db.ref(`rooms/${roomId}/game/meta`).update({ phase: "idle", currentRound: 1 });
     startRound(1);
@@ -340,7 +297,6 @@ function userSubmit(auto){
   }
   db.ref(`rooms/${roomId}/players/${userData.uid}/points`).transaction(c => (c||0) + score);
   db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set({score});
-  // checkAllIn(); <-- ეს ხაზი წაშლილია, რადგან აღარ გვჭირდება
 }
 
 function showReveal(){
@@ -407,29 +363,11 @@ function loadGlobalBoard() {
 async function restartGame() {
     const updates = {};
     const snap = await db.ref(`rooms/${roomId}/players`).once("value");
-    
-    // ქულების ნულზე დაყვანა
-    Object.keys(snap.val() || {}).forEach(uid => {
-        updates[`rooms/${roomId}/players/${uid}/points`] = 0;
-    });
-    
-    // თამაშის სტატუსის სრული გასუფთავება
-    updates[`rooms/${roomId}/game`] = {
-        meta: { 
-            phase: "idle", 
-            currentRound: 1, 
-            createdAt: Date.now() 
-        },
-        guesses: null,
-        state: null
-    };
-    
-    // ჩათის გასუფთავება (სურვილისამებრ)
+    Object.keys(snap.val() || {}).forEach(uid => { updates[`rooms/${roomId}/players/${uid}/points`] = 0; });
+    updates[`rooms/${roomId}/game`] = { meta: { phase: "idle", currentRound: 1, createdAt: Date.now() }, guesses: null, state: null };
     updates[`rooms/${roomId}/chat`] = null;
-    
     await db.ref().update(updates);
     if($("final-screen")) $("final-screen").style.display = "none";
 }
-
 
 function exitGame(){ location.reload(); }
