@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
+let roundMarkers = []; // აქ შევინახავთ ყველა მოთამაშის მარკერს და ხაზს
 const avatars = ['🐱','🐶','🦊','🐻','🐼','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🦄','🐉','🦒','🐯','🐱‍👤','🐺','🦓','🐘'];
 let selectedAvatar = localStorage.getItem('gamocnobie_avatar') || avatars[0];
 
@@ -220,6 +220,10 @@ function addEmoji(emoji) {
 
 function handlePhaseChange(){
   if (phase === "guess") {
+    // წინა რაუნდის მარკერების და ხაზების წაშლა რუკიდან
+    roundMarkers.forEach(m => m.setMap(null));
+    roundMarkers = [];
+
     submittedRound = 0; selectedLatLng = null; $("guess-btn").disabled = true; $("guess-btn").style.display = "block"; $("waiting-msg").style.display = "none";
     if(userMarker) userMarker.setMap(null); if(correctMarker) correctMarker.setMap(null); if(polyline) polyline.setMap(null);
     if (correct) {
@@ -309,14 +313,27 @@ async function showReveal(){
   const [gSnap, pSnap] = await Promise.all([db.ref(`rooms/${roomId}/game/guesses`).once("value"), db.ref(`rooms/${roomId}/players`).once("value")]);
   const guesses = gSnap.val() || {}, players = pSnap.val() || {};
   const cLoc = {lat: correct.lat, lng: correct.lng};
+  
   correctMarker = new google.maps.Marker({ position: cLoc, map: map, zIndex: 1000, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: "#22c55e", fillOpacity: 1, strokeColor: "white", strokeWeight: 2 } });
+  roundMarkers.push(correctMarker); // ვამატებთ წასაშლელების სიაში
+
   const bounds = new google.maps.LatLngBounds(); bounds.extend(cLoc);
+  
   Object.keys(guesses).forEach(uid => {
     const g = guesses[uid], p = players[uid];
     if (g.lat && g.lng) {
       const pLoc = {lat: g.lat, lng: g.lng}; bounds.extend(pLoc);
-      new google.maps.Marker({ position: pLoc, map: map, label: { text: `${p.avatar || '👤'} ${p.name}`, className: "player-map-label" }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 } });
-      new google.maps.Polyline({ path: [cLoc, pLoc], map: map, strokeColor: "#ef4444", strokeOpacity: 0.5, strokeWeight: 2 });
+      
+      const m = new google.maps.Marker({ 
+        position: pLoc, 
+        map: map, 
+        label: { text: `${p.avatar || '👤'} ${p.name}`, className: "player-map-label" }, 
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 } 
+      });
+      roundMarkers.push(m); // ვამატებთ მოთამაშის მარკერს
+
+      const line = new google.maps.Polyline({ path: [cLoc, pLoc], map: map, strokeColor: "#ef4444", strokeOpacity: 0.5, strokeWeight: 2 });
+      roundMarkers.push(line); // ვამატებთ ხაზს
     }
     if (uid === userData.uid) { $("res-score").innerText = `+${g.score || 0} ქულა`; $("result-popup").style.display = "block"; }
   });
@@ -370,3 +387,4 @@ async function restartGame() {
 }
 
 function exitGame(){ location.reload(); }
+
