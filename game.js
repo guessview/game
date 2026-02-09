@@ -1,4 +1,4 @@
-// game.js - გასწორებული და ოპტიმიზებული ვერსია (3+ მოთამაშის ფიქსით)
+// game.js - აბსოლუტურად სრული ვერსია (არაფერია შეკუმშული)
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtaqmlhkj414tmdchbZQv2GOlLB74HsZQ",
@@ -95,9 +95,16 @@ async function quickPlay(){
   if(!mapsReady || !userData) return;
   nickname = $("nickname").value || "Player";
   localStorage.setItem("gamocnobie_nick_" + userData.uid, nickname);
+  
   const newRoomId = "QUICK_" + Math.random().toString(36).substring(2,10).toUpperCase();
   roomId = newRoomId;
-  await db.ref(`rooms/${roomId}/meta`).set({ matchmaking: true, createdAt: Date.now(), phase: "idle" });
+
+  await db.ref(`rooms/${roomId}/meta`).set({ 
+      matchmaking: true, 
+      createdAt: Date.now(), 
+      phase: "idle" 
+  });
+
   joinRoom(roomId);
 }
 
@@ -105,17 +112,28 @@ async function findMatch() {
   if(!mapsReady || !userData) return;
   nickname = $("nickname").value || "Player";
   localStorage.setItem("gamocnobie_nick_" + userData.uid, nickname);
+  
   const snap = await db.ref("rooms").once("value");
   const rooms = snap.val() || {};
   const now = Date.now();
+  
   let target = Object.keys(rooms).find(id => {
       const r = rooms[id];
-      return r.meta?.matchmaking && Object.keys(r.players || {}).length < 6 && r.meta?.phase !== "finished" && (now - (r.meta?.createdAt || 0)) < 600000;
+      return r.meta?.matchmaking && 
+             Object.keys(r.players || {}).length < 6 && 
+             r.meta?.phase !== "finished" &&
+             (now - (r.meta?.createdAt || 0)) < 600000;
   });
+  
   if (!target) {
     target = "MATCH_" + Math.random().toString(36).substring(2,8).toUpperCase();
-    await db.ref(`rooms/${target}/meta`).set({ matchmaking: true, createdAt: now, phase: "idle" });
+    await db.ref(`rooms/${target}/meta`).set({ 
+        matchmaking: true, 
+        createdAt: now, 
+        phase: "idle" 
+    });
   }
+  
   joinRoom(target);
 }
 
@@ -133,10 +151,13 @@ function joinPrivateRoom(){ const code = $("room-code-input").value.toUpperCase(
 async function joinRoom(id){
   roomId = id; nickname = $("nickname").value || "Player";
   $("chat-messages").innerHTML = "";
+  
   await db.ref(`rooms/${roomId}/players/${userData.uid}`).set({ name: nickname, avatar: selectedAvatar, points: 0, uid: userData.uid });
   db.ref(`rooms/${roomId}/players/${userData.uid}`).onDisconnect().remove();
+  
   $("overlay").style.display = "none"; $("container").style.display = "block";
   $("ui").style.display = "flex"; $("scoreboard").style.display = "flex"; $("chat-panel").style.display = "flex";
+  
   const roomMeta = await db.ref(`rooms/${roomId}/meta`).once('value');
   if(roomMeta.exists() && roomMeta.val().matchmaking === false) {
       $('room-code-display').style.display = 'block';
@@ -192,7 +213,7 @@ function bindListeners(){
       $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
   });
 
-  // ავტომატური გადასვლა 3+ მოთამაშეზე
+  // 3+ მოთამაშის ფიქსი (Listening for guesses)
   db.ref(`rooms/${roomId}/game/guesses`).on("value", async (snap) => {
     if (phase !== "guess") return;
     const guesses = snap.val() || {};
@@ -258,10 +279,16 @@ setInterval(() => {
 async function ensureGame() {
   const snap = await db.ref(`rooms/${roomId}/game/meta`).once("value");
   const roomMeta = await db.ref(`rooms/${roomId}/meta`).once("value");
-  if (!snap.exists() || snap.val().phase === "finished") {
+  const data = snap.val() || {};
+
+  if (!snap.exists() || data.phase === "finished") {
       setTimeout(async () => {
-          await restartGame();
-          if (roomMeta.val().matchmaking === true) startRound(1);
+          if (roomMeta.val().matchmaking === true) {
+              await restartGame(); 
+              startRound(1);
+          } else {
+              await restartGame();
+          }
       }, 1000);
   }
 }
@@ -363,8 +390,18 @@ function loadGlobalBoard() {
 async function restartGame() {
     const updates = {};
     const snap = await db.ref(`rooms/${roomId}/players`).once("value");
-    Object.keys(snap.val() || {}).forEach(uid => { updates[`rooms/${roomId}/players/${uid}/points`] = 0; });
-    updates[`rooms/${roomId}/game`] = { meta: { phase: "idle", currentRound: 1, createdAt: Date.now() }, guesses: null, state: null };
+    Object.keys(snap.val() || {}).forEach(uid => {
+        updates[`rooms/${roomId}/players/${uid}/points`] = 0;
+    });
+    updates[`rooms/${roomId}/game`] = {
+        meta: { 
+            phase: "idle", 
+            currentRound: 1, 
+            createdAt: Date.now() 
+        },
+        guesses: null,
+        state: null
+    };
     updates[`rooms/${roomId}/chat`] = null;
     await db.ref().update(updates);
     if($("final-screen")) $("final-screen").style.display = "none";
