@@ -78,6 +78,7 @@
       <button onclick="savePrivateOptions()" style="background:#fbbf24; border:none; color:black; padding:12px; border-radius:12px; width:100%; font-weight:600; cursor:pointer;">Save</button>
     </div>
   </div>
+
   <div id="overlay">
     <!-- ენის გადამრთველი -->
     <div id="lang-switcher">
@@ -115,6 +116,9 @@
                 <span>🔒</span> <span data-i18n="private_room">Private Room</span>
             </button>
           </div>
+       
+          <!-- Online count -->
+          <div id="online-count" style="text-align: center; margin-top: 10px; color: #fbbf24; font-weight: bold;">Online: 0</div>
        
           <button class="btn bad" style="margin-top:20px; opacity:0.6;" onclick="logout()" data-i18n="logout">გამოსვლა</button>
           <div class="premium-donate-section">
