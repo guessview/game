@@ -252,29 +252,63 @@ async function manualGameStart() {
     startRound(1);
 }
 
-// ახალი ლოგიკა: ქალაქების / დასახლებული ადგილების ლისტი
+// ახალი ლოგიკა: ქალაქების / დასახლებული ადგილების ლისტი (გაზრდილი)
 const populatedLocations = [
-  { lat: 40.7128, lng: -74.0060 }, // New York
-  { lat: 51.5074, lng: -0.1278 }, // London
-  { lat: 35.6895, lng: 139.6917 }, // Tokyo
-  { lat: 48.8566, lng: 2.3522 }, // Paris
-  { lat: 34.0522, lng: -118.2437 }, // Los Angeles
-  { lat: 37.7749, lng: -122.4194 }, // San Francisco
-  { lat: 55.7558, lng: 37.6173 }, // Moscow
-  { lat: 41.9028, lng: 12.4964 }, // Rome
-  { lat: 52.5200, lng: 13.4050 }, // Berlin
-  { lat: 41.8781, lng: -87.6298 }, // Chicago
-  { lat: 39.9042, lng: 116.4074 }, // Beijing
-  { lat: 19.4326, lng: -99.1332 }, // Mexico City
-  { lat: 31.2304, lng: 121.4737 }, // Shanghai
-  { lat: 43.6532, lng: -79.3832 }, // Toronto
-  { lat: 45.4642, lng: 9.1900 }, // Milan
-  { lat: 33.8688, lng: 151.2093 }, // Sydney
-  { lat: -23.5505, lng: -46.6333 }, // Sao Paulo
-  { lat: 41.3851, lng: 2.1734 }, // Barcelona
-  { lat: 59.3293, lng: 18.0686 }, // Stockholm
-  { lat: 37.5665, lng: 126.9780 }, // Seoul
-  // დაამატე მეტი თუ გინდა
+  // ევროპა
+  { lat: 48.8566, lng: 2.3522 },    // Paris, France
+  { lat: 51.5074, lng: -0.1278 },   // London, UK
+  { lat: 52.5200, lng: 13.4050 },   // Berlin, Germany
+  { lat: 41.9028, lng: 12.4964 },   // Rome, Italy
+  { lat: 41.3851, lng: 2.1734 },    // Barcelona, Spain
+  { lat: 55.7558, lng: 37.6173 },   // Moscow, Russia
+  { lat: 59.3293, lng: 18.0686 },   // Stockholm, Sweden
+  { lat: 52.2297, lng: 21.0122 },   // Warsaw, Poland
+  { lat: 50.0755, lng: 14.4378 },   // Prague, Czechia
+  { lat: 48.2082, lng: 16.3738 },   // Vienna, Austria
+
+  // აზია
+  { lat: 35.6895, lng: 139.6917 },  // Tokyo, Japan
+  { lat: 37.5665, lng: 126.9780 },  // Seoul, South Korea
+  { lat: 39.9042, lng: 116.4074 },  // Beijing, China
+  { lat: 31.2304, lng: 121.4737 },  // Shanghai, China
+  { lat: 13.7563, lng: 100.5018 },  // Bangkok, Thailand
+  { lat: 1.3521, lng: 103.8198 },   // Singapore
+  { lat: 19.0760, lng: 72.8777 },   // Mumbai, India
+  { lat: 28.6139, lng: 77.2090 },   // New Delhi, India
+
+  // ამერიკა
+  { lat: 40.7128, lng: -74.0060 },  // New York, USA
+  { lat: 34.0522, lng: -118.2437 }, // Los Angeles, USA
+  { lat: 37.7749, lng: -122.4194 }, // San Francisco, USA
+  { lat: 41.8781, lng: -87.6298 },  // Chicago, USA
+  { lat: 43.6532, lng: -79.3832 },  // Toronto, Canada
+  { lat: 19.4326, lng: -99.1332 },  // Mexico City, Mexico
+  { lat: -23.5505, lng: -46.6333 }, // Sao Paulo, Brazil
+  { lat: -34.6037, lng: -58.3816 }, // Buenos Aires, Argentina
+
+  // ავსტრალია / ოკეანია
+  { lat: -33.8688, lng: 151.2093 }, // Sydney, Australia
+  { lat: -37.8136, lng: 144.9631 }, // Melbourne, Australia
+
+  // ახლო აღმოსავლეთი / აფრიკა
+  { lat: 25.2048, lng: 55.2708 },   // Dubai, UAE
+  { lat: 30.0444, lng: 31.2357 },   // Cairo, Egypt
+  { lat: -26.2041, lng: 28.0473 },  // Johannesburg, South Africa
+
+  // საქართველო და რეგიონი
+  { lat: 41.7151, lng: 44.8271 },   // Tbilisi, Georgia
+  { lat: 41.6500, lng: 44.7833 },   // Rustavi, Georgia
+  { lat: 42.2710, lng: 42.7010 },   // Kutaisi, Georgia
+  { lat: 41.6539, lng: 41.6418 },   // Batumi, Georgia
+  { lat: 40.1872, lng: 44.5152 },   // Yerevan, Armenia
+  { lat: 43.2389, lng: 76.8897 },   // Almaty, Kazakhstan
+  { lat: 41.0082, lng: 28.9784 },   // Istanbul, Turkey
+
+  // დამატებითი პოპულარული ადგილები
+  { lat: 25.7617, lng: -80.1918 },  // Miami, USA
+  { lat: 22.3193, lng: 114.1694 },  // Hong Kong
+  { lat: 14.5995, lng: 120.9842 },  // Manila, Philippines
+  { lat: 36.2048, lng: 138.2529 },  // Japan (გენერალური ოფსეტი)
 ];
 
 function startRound(num){
@@ -454,3 +488,4 @@ async function showFinalHistoryMap() {
    
     map.fitBounds(bounds);
 }
+
