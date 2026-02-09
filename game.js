@@ -566,3 +566,70 @@ function copyGameCode() {
 function editPrivateOptions() {
   alert('Edit Options: რაუნდები, ტაიმერი, No Move, Map Change - მალე დაემატება სრული პანელი');
 }
+// Edit Options გახსნა
+function editPrivateOptions() {
+  $('edit-options-popup').style.display = 'flex';
+
+  // წინა მნიშვნელობების ჩატვირთვა
+  db.ref(`rooms/${roomId}/meta`).once('value').then(snap => {
+    const meta = snap.val() || {};
+    $('options-rounds').value = meta.rounds || 15;
+    $('options-time').value = meta.timePerRound || 60;
+    $('options-no-move').checked = meta.noMove || false;
+    $('options-map').value = meta.mapType || "World";
+  });
+}
+
+// Close X
+function closeEditOptions() {
+  $('edit-options-popup').style.display = 'none';
+}
+
+// +/- ღილაკები
+function changeOption(type, delta) {
+  if (type === 'rounds') {
+    const input = $('options-rounds');
+    input.value = Math.max(1, parseInt(input.value) + delta);
+  } else if (type === 'time') {
+    const input = $('options-time');
+    input.value = Math.max(10, parseInt(input.value) + delta);
+  }
+}
+
+// Save
+async function savePrivateOptions() {
+  await db.ref(`rooms/${roomId}/meta`).update({
+    rounds: parseInt($('options-rounds').value),
+    timePerRound: parseInt($('options-time').value),
+    noMove: $('options-no-move').checked,
+    mapType: $('options-map').value
+  });
+  closeEditOptions();
+  // განახლება ლობიში
+  db.ref(`rooms/${roomId}/meta`).once('value').then(meta => updateLobbyUI(meta.val()));
+}
+
+// Online Users in Main Menu
+function showOnlineCount() {
+  db.ref('online').on('value', snap => {
+    const count = snap.numChildren();
+    // დაამატე ელემენტი მენიუში, მაგ. global-top-ის გვერდით
+    const onlineDiv = document.createElement('div');
+    onlineDiv.innerText = `Online: ${count}`;
+    onlineDiv.style = "color: #f5a623; font-size: 14px; margin-top: 10px;";
+    $('post-auth').appendChild(onlineDiv);
+  });
+}
+
+// Presence for Online Count
+function setPresence() {
+  const presenceRef = db.ref('online/' + userData.uid);
+  presenceRef.set(true);
+  presenceRef.onDisconnect().remove();
+}
+
+// გამოიძახე load-ზე
+window.addEventListener('load', () => {
+  if (userData) setPresence();
+  showOnlineCount();
+});
