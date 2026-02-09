@@ -543,4 +543,47 @@ h1 {
 .score-text {
     color: #22c55e; /* მწვანე ქულა */
     font-weight: 900;
+
+}
+/* --- მოთამაშეების სახელების გრადიენტიანი ჩარჩოები რუკაზე --- */
+.player-map-label {
+    background: linear-gradient(135deg, #7000FF 0%, #100125 100%) !important;
+    padding: 6px 14px !important;
+    border-radius: 50px !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.6) !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    /* წევს ჩარჩოს წერტილის თავზე, რომ ზუსტად გამოჩნდეს */
+    transform: translateY(-35px); 
+    pointer-events: none;
+}
+
+/* პატარა ისარი ჩარჩოს ქვემოთ */
+.player-map-label::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #100125;
+}
+
+/* ანიმაცია, რომ სახელები რბილად გამოჩნდეს */
+@keyframes fadeInLabel {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(-35px); }
+}
+
+.player-map-label {
+    animation: fadeInLabel 0.4s ease-out forwards;
 }
