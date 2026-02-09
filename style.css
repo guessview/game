@@ -630,3 +630,65 @@ h1 {
 body.game-active #lang-switcher {
   display: none !important;
 }
+/* Private Room Lobby Panel - WorldGuessr-ის სტილში */
+#private-lobby {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 2000;
+  color: white;
+  font-family: Inter, sans-serif;
+  align-items: center;
+  justify-content: center;
+}
+
+#private-lobby > div {
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#private-lobby h2 {
+  margin: 0 0 20px;
+  font-size: 28px;
+  color: #4ade80;
+}
+
+#private-lobby .player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #2a2a2a;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+#private-lobby .host {
+  border: 2px solid #fbbf24;
+}
+
+#lobby-start-btn {
+  background: #22c55e;
+  color: black;
+  border: none;
+  padding: 16px 40px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: not-allowed;
+  width: 100%;
+}
+
+#lobby-start-btn:not(:disabled) {
+  cursor: pointer;
+}
+
+#lobby-start-btn:not(:disabled):hover {
+  background: #16a34a;
+}
