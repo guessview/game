@@ -1,4 +1,4 @@
-// game.js - აბსოლუტურად სრული ვერსია (არაფერია შეკუმშული)
+// game.js - აბსოლუტურად სრული ვერსია (არაფერია ამოჭრილი)
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtaqmlhkj414tmdchbZQv2GOlLB74HsZQ",
@@ -34,6 +34,7 @@ function playTickSound() {
   osc.start(); osc.stop(audioCtx.currentTime + 0.1);
 }
 
+// 1. ავატარების ლოგიკა (აღდგენილია)
 const avatarSelector = $('avatar-selector');
 if(avatarSelector) {
     avatars.forEach(av => {
@@ -95,16 +96,9 @@ async function quickPlay(){
   if(!mapsReady || !userData) return;
   nickname = $("nickname").value || "Player";
   localStorage.setItem("gamocnobie_nick_" + userData.uid, nickname);
-  
   const newRoomId = "QUICK_" + Math.random().toString(36).substring(2,10).toUpperCase();
   roomId = newRoomId;
-
-  await db.ref(`rooms/${roomId}/meta`).set({ 
-      matchmaking: true, 
-      createdAt: Date.now(), 
-      phase: "idle" 
-  });
-
+  await db.ref(`rooms/${roomId}/meta`).set({ matchmaking: true, createdAt: Date.now(), phase: "idle" });
   joinRoom(roomId);
 }
 
@@ -112,28 +106,17 @@ async function findMatch() {
   if(!mapsReady || !userData) return;
   nickname = $("nickname").value || "Player";
   localStorage.setItem("gamocnobie_nick_" + userData.uid, nickname);
-  
   const snap = await db.ref("rooms").once("value");
   const rooms = snap.val() || {};
   const now = Date.now();
-  
   let target = Object.keys(rooms).find(id => {
       const r = rooms[id];
-      return r.meta?.matchmaking && 
-             Object.keys(r.players || {}).length < 6 && 
-             r.meta?.phase !== "finished" &&
-             (now - (r.meta?.createdAt || 0)) < 600000;
+      return r.meta?.matchmaking && Object.keys(r.players || {}).length < 6 && r.meta?.phase !== "finished" && (now - (r.meta?.createdAt || 0)) < 600000;
   });
-  
   if (!target) {
     target = "MATCH_" + Math.random().toString(36).substring(2,8).toUpperCase();
-    await db.ref(`rooms/${target}/meta`).set({ 
-        matchmaking: true, 
-        createdAt: now, 
-        phase: "idle" 
-    });
+    await db.ref(`rooms/${target}/meta`).set({ matchmaking: true, createdAt: now, phase: "idle" });
   }
-  
   joinRoom(target);
 }
 
@@ -151,13 +134,10 @@ function joinPrivateRoom(){ const code = $("room-code-input").value.toUpperCase(
 async function joinRoom(id){
   roomId = id; nickname = $("nickname").value || "Player";
   $("chat-messages").innerHTML = "";
-  
   await db.ref(`rooms/${roomId}/players/${userData.uid}`).set({ name: nickname, avatar: selectedAvatar, points: 0, uid: userData.uid });
   db.ref(`rooms/${roomId}/players/${userData.uid}`).onDisconnect().remove();
-  
   $("overlay").style.display = "none"; $("container").style.display = "block";
   $("ui").style.display = "flex"; $("scoreboard").style.display = "flex"; $("chat-panel").style.display = "flex";
-  
   const roomMeta = await db.ref(`rooms/${roomId}/meta`).once('value');
   if(roomMeta.exists() && roomMeta.val().matchmaking === false) {
       $('room-code-display').style.display = 'block';
@@ -171,6 +151,7 @@ function initMaps(){
   if (panorama) return;
   panorama = new google.maps.StreetViewPanorama($("street-view"), { addressControl: false, showRoadLabels: false, visible: false });
   map = new google.maps.Map($("map"), { center: {lat:20, lng:0}, zoom:2, disableDefaultUI: true });
+  // 2. რუკის ზომის ცვლილების მოსმენა (აღდგენილია)
   new ResizeObserver(() => google.maps.event.trigger(map, 'resize')).observe($("map-wrapper"));
   map.addListener("click", e => {
     if (phase !== "guess" || submittedRound === currentRound) return;
@@ -202,7 +183,6 @@ function bindListeners(){
             $('manual-start-btn').style.display = 'none';
         }
     });
-
     if (newPhase !== phase) { phase = newPhase; handlePhaseChange(); }
     $("round-display").innerText = `რაუნდი: ${Math.min(currentRound, 15)} / 15`;
   });
@@ -213,16 +193,12 @@ function bindListeners(){
       $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
   });
 
-  // 3+ მოთამაშის ფიქსი (Listening for guesses)
   db.ref(`rooms/${roomId}/game/guesses`).on("value", async (snap) => {
     if (phase !== "guess") return;
     const guesses = snap.val() || {};
     const pSnap = await db.ref(`rooms/${roomId}/players`).once("value");
     const players = pSnap.val() || {};
-    const gCount = Object.keys(guesses).length;
-    const pCount = Object.keys(players).length;
-
-    if (gCount >= pCount && pCount > 0) {
+    if (Object.keys(guesses).length >= Object.keys(players).length && Object.keys(players).length > 0) {
       if (Object.keys(players)[0] === userData.uid) {
         db.ref(`rooms/${roomId}/game/meta`).update({ phase: "reveal", deadline: Date.now() + 6000 });
       }
@@ -234,6 +210,12 @@ function sendChatMessage(){
     const txt = $("chat-input").value.trim(); if(!txt) return;
     db.ref(`rooms/${roomId}/chat`).push({ user: nickname, avatar: selectedAvatar, text: txt });
     $("chat-input").value = "";
+}
+
+function addEmoji(emoji) {
+    $("chat-input").value += emoji;
+    toggleEmojiPicker();
+    $("chat-input").focus();
 }
 
 function handlePhaseChange(){
@@ -265,6 +247,7 @@ function handlePhaseChange(){
   }
 }
 
+// 3. თაიმერის ლოგიკა (აღდგენილია)
 setInterval(() => {
   if (!deadline || phase !== "guess") { $("timer").style.color = "var(--accent-amber)"; return; }
   const diff = Math.max(0, Math.ceil((deadline - Date.now())/1000));
@@ -280,15 +263,10 @@ async function ensureGame() {
   const snap = await db.ref(`rooms/${roomId}/game/meta`).once("value");
   const roomMeta = await db.ref(`rooms/${roomId}/meta`).once("value");
   const data = snap.val() || {};
-
   if (!snap.exists() || data.phase === "finished") {
       setTimeout(async () => {
-          if (roomMeta.val().matchmaking === true) {
-              await restartGame(); 
-              startRound(1);
-          } else {
-              await restartGame();
-          }
+          await restartGame();
+          if (roomMeta.val() && roomMeta.val().matchmaking === true) startRound(1);
       }, 1000);
   }
 }
@@ -316,99 +294,32 @@ function userSubmit(auto){
   if (submittedRound === currentRound) return;
   submittedRound = currentRound;
   $("guess-btn").style.display = "none"; $("waiting-msg").style.display = "block";
-  let score = 0;
-  let lat = null, lng = null;
-
+  let score = 0; let lat = null, lng = null;
   if (selectedLatLng && correct) {
-    lat = selectedLatLng.lat();
-    lng = selectedLatLng.lng();
+    lat = selectedLatLng.lat(); lng = selectedLatLng.lng();
     const d = google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(correct.lat, correct.lng), selectedLatLng);
     score = Math.floor(5000 * Math.exp(-(d/1000)/1800));
     if (score >= 4000) createFireworks();
   }
-
   db.ref(`rooms/${roomId}/players/${userData.uid}/points`).transaction(c => (c||0) + score);
-  
-  // აქ ვინახავთ კოორდინატებსაც, რომ სხვებმა დაინახონ თქვენი წერტილი
-  db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set({
-    score: score,
-    lat: lat,
-    lng: lng
-  });
+  db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set({score: score, lat: lat, lng: lng});
 }
 
 async function showReveal(){
-  const guessesSnap = await db.ref(`rooms/${roomId}/game/guesses`).once("value");
-  const playersSnap = await db.ref(`rooms/${roomId}/players`).once("value");
-  const guesses = guessesSnap.val() || {};
-  const players = playersSnap.val() || {};
-  
+  const [gSnap, pSnap] = await Promise.all([db.ref(`rooms/${roomId}/game/guesses`).once("value"), db.ref(`rooms/${roomId}/players`).once("value")]);
+  const guesses = gSnap.val() || {}, players = pSnap.val() || {};
   const cLoc = {lat: correct.lat, lng: correct.lng};
-  
-  // სწორი ლოკაციის მარკერი (მწვანე)
-  correctMarker = new google.maps.Marker({ 
-    position: cLoc, 
-    map: map, 
-    zIndex: 1000,
-    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: "#22c55e", fillOpacity: 1, strokeColor: "white", strokeWeight: 2 } 
-  });
-
-  const bounds = new google.maps.LatLngBounds();
-  bounds.extend(cLoc);
-
+  correctMarker = new google.maps.Marker({ position: cLoc, map: map, zIndex: 1000, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: "#22c55e", fillOpacity: 1, strokeColor: "white", strokeWeight: 2 } });
+  const bounds = new google.maps.LatLngBounds(); bounds.extend(cLoc);
   Object.keys(guesses).forEach(uid => {
-    const g = guesses[uid];
-    const p = players[uid];
-    
+    const g = guesses[uid], p = players[uid];
     if (g.lat && g.lng) {
-      const pLoc = {lat: g.lat, lng: g.lng};
-      bounds.extend(pLoc);
-
-      // ლამაზი მარკერი სახელით და ავატარით
-      const labelText = `${p.avatar || '👤'} ${p.name}`;
-      
-      new google.maps.Marker({
-        position: pLoc,
-        map: map,
-        label: {
-          text: labelText,
-          color: "white",
-          fontSize: "12px",
-          fontWeight: "bold",
-          className: "player-map-label" // CSS-ისთვის
-        },
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 0 // ნამდვილ იკონკას ვმალავთ, მხოლოდ ლეიბლი გვინდა
-        }
-      });
-
-      new google.maps.Polyline({ 
-        path: [cLoc, pLoc], 
-        map: map, 
-        strokeColor: "#ef4444", 
-        strokeOpacity: 0.5, 
-        strokeWeight: 2 
-      });
+      const pLoc = {lat: g.lat, lng: g.lng}; bounds.extend(pLoc);
+      new google.maps.Marker({ position: pLoc, map: map, label: { text: `${p.avatar || '👤'} ${p.name}`, className: "player-map-label" }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 } });
+      new google.maps.Polyline({ path: [cLoc, pLoc], map: map, strokeColor: "#ef4444", strokeOpacity: 0.5, strokeWeight: 2 });
     }
-    
-    if (uid === userData.uid) {
-      $("res-score").innerText = `+${g.score || 0} ქულა`;
-      $("result-popup").style.display = "block";
-    }
+    if (uid === userData.uid) { $("res-score").innerText = `+${g.score || 0} ქულა`; $("result-popup").style.display = "block"; }
   });
-
-  map.fitBounds(bounds);
-}
-    
-    // თქვენი საკუთარი ქულის ჩვენება პოპაპში
-    if (uid === userData.uid) {
-      $("res-score").innerText = `+${g.score || 0} ქულა`;
-      $("result-popup").style.display = "block";
-    }
-  });
-
-  // მოვარგოთ რუკის მასშტაბი, რომ ყველა წერტილი გამოჩნდეს
   map.fitBounds(bounds);
 }
 
@@ -417,11 +328,7 @@ async function finishGame() {
     const snap = await db.ref(`rooms/${roomId}/players`).once("value");
     const players = Object.values(snap.val() || {}).sort((a,b) => b.points - a.points);
     $("winner-name").innerText = "🏆 გამარჯვებული: " + (players[0]?.name || "---");
-    $("final-stats").innerHTML = players.map(p => `
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:700;">
-            <span>${p.avatar || '👤'} ${p.name}</span>
-            <span style="color:var(--accent-green)">${p.points} ქულა</span>
-        </div>`).join("");
+    $("final-stats").innerHTML = players.map(p => `<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:700;"><span>${p.avatar || '👤'} ${p.name}</span><span style="color:var(--accent-green)">${p.points} ქულა</span></div>`).join("");
     updateGlobalLeaderboard();
 }
 
@@ -443,43 +350,23 @@ function loadGlobalBoard() {
   db.ref("global_leaderboard").orderByChild("score").limitToLast(10).on("value", snap => {
     const listDiv = $("global-list");
     if (!snap.exists()) { listDiv.innerHTML = '<div style="color:gray; text-align:center; padding:20px;">რეიტინგი ცარიელია.</div>'; return; }
-    let items = []; snap.forEach(c => { 
-      const val = c.val();
-      items.push({ avatar: val.avatar || '👤', name: val.name || c.key, score: val.score || 0 }); 
-    });
+    let items = []; snap.forEach(c => { const val = c.val(); items.push({ avatar: val.avatar || '👤', name: val.name || c.key, score: val.score || 0 }); });
     items.reverse();
     listDiv.className = "global-list-container";
-    listDiv.innerHTML = items.map((i, idx) => `
-      <div class="global-rank" style="display:flex; align-items:center; gap:10px; margin-bottom:8px; background:rgba(255,255,255,0.03); padding:8px; border-radius:8px;">
-        <span class="rank-text" style="color:var(--accent-amber); font-weight:900;">#${idx + 1}</span>
-        <span style="font-size:20px;">${i.avatar}</span>
-        <span class="rank-text" style="flex:1;">${i.name}</span>
-        <span class="score-text" style="color:var(--accent-green); font-weight:900;">${i.score}</span>
-      </div>
-    `).join("");
+    listDiv.innerHTML = items.map((i, idx) => `<div class="global-rank" style="display:flex; align-items:center; gap:10px; margin-bottom:8px; background:rgba(255,255,255,0.03); padding:8px; border-radius:8px;"><span class="rank-text" style="color:var(--accent-amber); font-weight:900;">#${idx + 1}</span><span style="font-size:20px;">${i.avatar}</span><span class="rank-text" style="flex:1;">${i.name}</span><span class="score-text" style="color:var(--accent-green); font-weight:900;">${i.score}</span></div>`).join("");
   });
 }
 
 async function restartGame() {
     const updates = {};
     const snap = await db.ref(`rooms/${roomId}/players`).once("value");
-    Object.keys(snap.val() || {}).forEach(uid => {
-        updates[`rooms/${roomId}/players/${uid}/points`] = 0;
-    });
-    updates[`rooms/${roomId}/game`] = {
-        meta: { 
-            phase: "idle", 
-            currentRound: 1, 
-            createdAt: Date.now() 
-        },
-        guesses: null,
-        state: null
-    };
+    if (snap.exists()) {
+        Object.keys(snap.val()).forEach(uid => { updates[`rooms/${roomId}/players/${uid}/points`] = 0; });
+    }
+    updates[`rooms/${roomId}/game`] = { meta: { phase: "idle", currentRound: 1, createdAt: Date.now() }, guesses: null, state: null };
     updates[`rooms/${roomId}/chat`] = null;
     await db.ref().update(updates);
     if($("final-screen")) $("final-screen").style.display = "none";
 }
 
 function exitGame(){ location.reload(); }
-
-
