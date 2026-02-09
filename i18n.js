@@ -112,3 +112,18 @@ function updateAllTexts() {
 window.addEventListener('load', () => {
   updateAllTexts();
 });
+en: {
+  "your_party": "YOUR PARTY",
+  "start_game": "Start Game",
+  "edit_options": "Edit Options",
+  "copy": "Copy",
+  "no_move": "No moving, panning, zooming"
+},
+
+ka: {
+  "your_party": "YOUR PARTY",
+  "start_game": "თამაშის დაწყება",
+  "edit_options": "Edit Options",
+  "copy": "კოპირება",
+  "no_move": "არა მოძრაობა, პანინგი, ზუმი"
+}
