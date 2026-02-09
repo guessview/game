@@ -16,15 +16,41 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app-check.js"></script>
 </head>
 <body>
-  
-#lang-switcher {
-  display: flex; /* ნაგულისხმევად ჩანს */
-}
 
-/* თამაშის რეჟიმში დავმალოთ */
-body.game-active #lang-switcher {
-  display: none !important;
-}
+  <div id="overlay">
+
+    <!-- ენის გადამრთველი აქ (უკვე სწორად გაქვს) -->
+    <div id="lang-switcher">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="ka">KA</button>
+    </div>
+
+    <div class="panel">
+      <div class="card">
+        <div class="brand">
+          <div class="logo">🌍</div>
+          <div>
+            <h1>გამოცნობიე</h1>
+            <div class="subtitle">Street View Multiplayer — 1 წუთი გაქვს რუქაზე გამოსაცნობად.</div>
+          </div>
+        </div>
+        <!-- დანარჩენი მენიუს კონტენტი: ავატარები, ღილაკები, ლიდერბორდი, როგორ მუშაობს და ა.შ. -->
+      </div>
+    </div>
+
+  </div> <!-- overlay-ის დახურვა -->
+
+  <!-- თამაშის ნაწილები (ui, scoreboard, chat-panel, container და ა.შ.) -->
+  <div id="ui" class="floating-panel">...</div>
+  <div id="scoreboard" class="floating-panel">...</div>
+  <div id="chat-panel" class="floating-panel">...</div>
+  <div id="container" style="display:none;">
+    ...
+  </div>
+
+  <script src="game.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=..."></script>
+</body>
   
 <div id="overlay">
   <div class="panel">
