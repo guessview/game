@@ -306,7 +306,15 @@ function userSubmit(auto){
     if (score >= 4000) createFireworks();
   }
   db.ref(`rooms/${roomId}/players/${userData.uid}/points`).transaction(c => (c||0) + score);
-  db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set({score: score, lat: lat, lng: lng});
+  
+  // ვინახავთ მიმდინარე რაუნდისთვის
+  const guessData = {score: score, lat: lat, lng: lng};
+  db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set(guessData);
+  
+  // ვინახავთ ისტორიაში (შემდგომი ჩვენებისთვის)
+  db.ref(`rooms/${roomId}/history/round_${currentRound}/${userData.uid}`).set(guessData);
+  // აქვე ვინახავთ ამ რაუნდის სწორ პასუხსაც, რომ მერე რუკამ იცოდეს სად გაავლოს ხაზები
+  db.ref(`rooms/${roomId}/history/round_${currentRound}/correct`).set({lat: correct.lat, lng: correct.lng});
 }
 
 async function showReveal(){
@@ -346,7 +354,9 @@ async function finishGame() {
     const players = Object.values(snap.val() || {}).sort((a,b) => b.points - a.points);
     $("winner-name").innerText = "🏆 გამარჯვებული: " + (players[0]?.name || "---");
     $("final-stats").innerHTML = players.map(p => `<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:700;"><span>${p.avatar || '👤'} ${p.name}</span><span style="color:var(--accent-green)">${p.points} ქულა</span></div>`).join("");
+    
     updateGlobalLeaderboard();
+    showFinalHistoryMap(); // აი ეს ფუნქცია დახატავს ყველაფერს
 }
 
 async function updateGlobalLeaderboard() {
@@ -382,9 +392,67 @@ async function restartGame() {
     }
     updates[`rooms/${roomId}/game`] = { meta: { phase: "idle", currentRound: 1, createdAt: Date.now() }, guesses: null, state: null };
     updates[`rooms/${roomId}/chat`] = null;
+    updates[`rooms/${roomId}/history`] = null;
     await db.ref().update(updates);
     if($("final-screen")) $("final-screen").style.display = "none";
 }
 
 function exitGame(){ location.reload(); }
+async function showFinalHistoryMap() {
+    const historySnap = await db.ref(`rooms/${roomId}/history`).once("value");
+    if (!historySnap.exists()) return;
+    
+    const history = historySnap.val();
+    const playersSnap = await db.ref(`rooms/${roomId}/players`).once("value");
+    const players = playersSnap.val() || {};
+    
+    const bounds = new google.maps.LatLngBounds();
+    
+    // გადავუყვეთ ყველა რაუნდს ისტორიაში
+    Object.keys(history).forEach(roundKey => {
+        const roundData = history[roundKey];
+        const cLoc = roundData.correct;
+        if (!cLoc) return;
+
+        bounds.extend(new google.maps.LatLng(cLoc.lat, cLoc.lng));
+
+        // დავსვათ სწორი პასუხის პატარა წერტილი
+        new google.maps.Marker({
+            position: cLoc,
+            map: map,
+            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 4, fillColor: "#22c55e", fillOpacity: 0.8, strokeColor: "white", strokeWeight: 1 }
+        });
+
+        // გამოვაჩინოთ თითოეული მოთამაშის მონიშვნა ამ რაუნდში
+        Object.keys(roundData).forEach(uid => {
+            if (uid === 'correct') return;
+            const g = roundData[uid];
+            const p = players[uid];
+
+            if (g.lat && g.lng) {
+                const pLoc = {lat: g.lat, lng: g.lng};
+                bounds.extend(new google.maps.LatLng(g.lat, g.lng));
+
+                // მოთამაშის წერტილი (პატარა, რომ რუკა არ გადაიტვირთოს)
+                new google.maps.Marker({
+                    position: pLoc,
+                    map: map,
+                    title: `${p.name} (რაუნდი ${roundKey.split('_')[1]})`,
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 3, fillColor: "#ef4444", fillOpacity: 0.6, strokeColor: "white", strokeWeight: 1 }
+                });
+
+                // გავავლოთ ძალიან თხელი ხაზი
+                new google.maps.Polyline({
+                    path: [cLoc, pLoc],
+                    map: map,
+                    strokeColor: "#ef4444",
+                    strokeOpacity: 0.2,
+                    strokeWeight: 1
+                });
+            }
+        });
+    });
+    
+    map.fitBounds(bounds);
+}
 
