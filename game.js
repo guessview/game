@@ -317,26 +317,83 @@ function userSubmit(auto){
   submittedRound = currentRound;
   $("guess-btn").style.display = "none"; $("waiting-msg").style.display = "block";
   let score = 0;
+  let lat = null, lng = null;
+
   if (selectedLatLng && correct) {
+    lat = selectedLatLng.lat();
+    lng = selectedLatLng.lng();
     const d = google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(correct.lat, correct.lng), selectedLatLng);
     score = Math.floor(5000 * Math.exp(-(d/1000)/1800));
     if (score >= 4000) createFireworks();
   }
+
   db.ref(`rooms/${roomId}/players/${userData.uid}/points`).transaction(c => (c||0) + score);
-  db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set({score});
+  
+  // აქ ვინახავთ კოორდინატებსაც, რომ სხვებმა დაინახონ თქვენი წერტილი
+  db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set({
+    score: score,
+    lat: lat,
+    lng: lng
+  });
 }
 
-function showReveal(){
-  db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).once("value").then(snap => {
-    const g = snap.val() || { score: 0 };
-    $("res-score").innerText = `+${g.score} ქულა`; $("result-popup").style.display = "block";
-    const cLoc = {lat: correct.lat, lng: correct.lng};
-    correctMarker = new google.maps.Marker({ position: cLoc, map: map, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: "#22c55e", fillOpacity: 1, strokeColor: "white", strokeWeight: 2 } });
-    if (selectedLatLng) {
-      polyline = new google.maps.Polyline({ path: [cLoc, selectedLatLng], map: map, strokeColor: "#ef4444", strokeWeight: 3 });
-      const bounds = new google.maps.LatLngBounds(); bounds.extend(cLoc); bounds.extend(selectedLatLng); map.fitBounds(bounds);
+async function showReveal(){
+  // 1. წამოვიღოთ ყველა მოთამაშის მონიშვნა ამ რაუნდისთვის
+  const guessesSnap = await db.ref(`rooms/${roomId}/game/guesses`).once("value");
+  const playersSnap = await db.ref(`rooms/${roomId}/players`).once("value");
+  const guesses = guessesSnap.val() || {};
+  const players = playersSnap.val() || {};
+  
+  const cLoc = {lat: correct.lat, lng: correct.lng};
+  
+  // 2. დავსვათ სწორი ლოკაციის მარკერი (მწვანე)
+  correctMarker = new google.maps.Marker({ 
+    position: cLoc, 
+    map: map, 
+    zIndex: 1000,
+    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: "#22c55e", fillOpacity: 1, strokeColor: "white", strokeWeight: 2 } 
+  });
+
+  const bounds = new google.maps.LatLngBounds();
+  bounds.extend(cLoc);
+
+  // 3. გამოვაჩინოთ თითოეული მოთამაშის მონიშნული წერტილი
+  Object.keys(guesses).forEach(uid => {
+    const g = guesses[uid];
+    const p = players[uid];
+    
+    if (g.lat && g.lng) {
+      const pLoc = {lat: g.lat, lng: g.lng};
+      bounds.extend(pLoc);
+
+      // დავსვათ მოთამაშის მარკერი (წითელი წერტილი ან მისი ავატარი)
+      new google.maps.Marker({
+        position: pLoc,
+        map: map,
+        label: { text: p.avatar || '👤', fontSize: '16px' },
+        title: p.name,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: "#ef4444", fillOpacity: 0.8, strokeColor: "white", strokeWeight: 1 }
+      });
+
+      // გავავლოთ ხაზი სწორ წერტილამდე
+      new google.maps.Polyline({ 
+        path: [cLoc, pLoc], 
+        map: map, 
+        strokeColor: "#ef4444", 
+        strokeOpacity: 0.5, 
+        strokeWeight: 2 
+      });
+    }
+    
+    // თქვენი საკუთარი ქულის ჩვენება პოპაპში
+    if (uid === userData.uid) {
+      $("res-score").innerText = `+${g.score || 0} ქულა`;
+      $("result-popup").style.display = "block";
     }
   });
+
+  // მოვარგოთ რუკის მასშტაბი, რომ ყველა წერტილი გამოჩნდეს
+  map.fitBounds(bounds);
 }
 
 async function finishGame() {
@@ -408,3 +465,4 @@ async function restartGame() {
 }
 
 function exitGame(){ location.reload(); }
+
