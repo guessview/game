@@ -105,14 +105,27 @@ async function findMatch() {
   }
   joinRoom(target);
 }
+
+// ✅ განახლებული createPrivateRoom — რაუნდების არჩევა
 async function createPrivateRoom(){
   if(!userData) return;
   nickname = $("nickname").value || "Player";
   localStorage.setItem("gamocnobie_nick_" + userData.uid, nickname);
+
+  // წაკითხვა სელექტიდან (თუ არ არსებობს — ნაგულისხმევი 15)
+  const selectedRounds = parseInt(document.getElementById('private-rounds-select')?.value) || 15;
+
   const target = Math.random().toString(36).substring(2,8).toUpperCase();
-  await db.ref(`rooms/${target}/meta`).set({ matchmaking: false, createdAt: Date.now(), phase: "idle" });
+  await db.ref(`rooms/${target}/meta`).set({ 
+    matchmaking: false, 
+    createdAt: Date.now(), 
+    phase: "idle",
+    rounds: selectedRounds,          // ახალი ველი
+    currentRound: 0
+  });
   joinRoom(target);
 }
+
 function joinPrivateRoom(){ const code = $("room-code-input").value.toUpperCase(); if(code) joinRoom(code); }
 async function joinRoom(id){
   roomId = id; nickname = $("nickname").value || "Player";
@@ -157,7 +170,12 @@ function bindListeners(){
     deadline = data.meta?.deadline || 0; correct = data.state;
    
     db.ref(`rooms/${roomId}/meta`).once('value').then(m => {
-        const meta = m.val();
+        const meta = m.val() || {};
+        const maxRounds = meta.rounds || 15;  // ✅ ახალი: მაქსიმალური რაუნდები
+
+        // ✅ განახლებული round-display
+        $("round-display").innerText = `რაუნდი: ${currentRound} / ${maxRounds}`;
+
         if(newPhase === "idle" && meta.matchmaking === false) {
             $('manual-start-btn').style.display = 'block';
         } else {
@@ -165,7 +183,6 @@ function bindListeners(){
         }
     });
     if (newPhase !== phase) { phase = newPhase; handlePhaseChange(); }
-    $("round-display").innerText = `რაუნდი: ${Math.min(currentRound, 15)} / 15`;
   });
   db.ref(`rooms/${roomId}/chat`).on("child_added", snap => {
       const m = snap.val();
@@ -196,7 +213,6 @@ function addEmoji(emoji) {
 }
 function handlePhaseChange(){
   if (phase === "guess") {
-    // წინა რაუნდის მარკერების და ხაზების წაშლა რუკიდან
     roundMarkers.forEach(m => m.setMap(null));
     roundMarkers = [];
     submittedRound = 0; selectedLatLng = null; $("guess-btn").disabled = true; $("guess-btn").style.display = "block"; $("waiting-msg").style.display = "none";
@@ -212,9 +228,16 @@ function handlePhaseChange(){
   } else if (phase === "reveal") {
     if (submittedRound < currentRound) userSubmit(true);
     showReveal();
-    setTimeout(() => {
-      if(currentRound < 15) {
-          db.ref(`rooms/${roomId}/players`).limitToFirst(1).once("value", s => { if(Object.keys(s.val())[0] === userData.uid) startRound(currentRound + 1); });
+    setTimeout(async () => {
+      // ✅ ახალი ლოგიკა: maxRounds meta-დან
+      const metaSnap = await db.ref(`rooms/${roomId}/meta`).once('value');
+      const meta = metaSnap.val() || {};
+      const maxRounds = meta.rounds || 15;
+
+      if(currentRound < maxRounds) {
+          db.ref(`rooms/${roomId}/players`).limitToFirst(1).once("value", s => { 
+            if(Object.keys(s.val())[0] === userData.uid) startRound(currentRound + 1); 
+          });
       } else {
           db.ref(`rooms/${roomId}/game/meta/phase`).set("finished");
       }
@@ -251,86 +274,70 @@ async function manualGameStart() {
     await db.ref(`rooms/${roomId}/game/meta`).update({ phase: "idle", currentRound: 1 });
     startRound(1);
 }
-
 // ახალი ლოგიკა: ქალაქების / დასახლებული ადგილების ლისტი (გაზრდილი)
 const populatedLocations = [
   // ევროპა
-  { lat: 48.8566, lng: 2.3522 },    // Paris, France
-  { lat: 51.5074, lng: -0.1278 },   // London, UK
-  { lat: 52.5200, lng: 13.4050 },   // Berlin, Germany
-  { lat: 41.9028, lng: 12.4964 },   // Rome, Italy
-  { lat: 41.3851, lng: 2.1734 },    // Barcelona, Spain
-  { lat: 55.7558, lng: 37.6173 },   // Moscow, Russia
-  { lat: 59.3293, lng: 18.0686 },   // Stockholm, Sweden
-  { lat: 52.2297, lng: 21.0122 },   // Warsaw, Poland
-  { lat: 50.0755, lng: 14.4378 },   // Prague, Czechia
-  { lat: 48.2082, lng: 16.3738 },   // Vienna, Austria
-
+  { lat: 48.8566, lng: 2.3522 }, // Paris, France
+  { lat: 51.5074, lng: -0.1278 }, // London, UK
+  { lat: 52.5200, lng: 13.4050 }, // Berlin, Germany
+  { lat: 41.9028, lng: 12.4964 }, // Rome, Italy
+  { lat: 41.3851, lng: 2.1734 }, // Barcelona, Spain
+  { lat: 55.7558, lng: 37.6173 }, // Moscow, Russia
+  { lat: 59.3293, lng: 18.0686 }, // Stockholm, Sweden
+  { lat: 52.2297, lng: 21.0122 }, // Warsaw, Poland
+  { lat: 50.0755, lng: 14.4378 }, // Prague, Czechia
+  { lat: 48.2082, lng: 16.3738 }, // Vienna, Austria
   // აზია
-  { lat: 35.6895, lng: 139.6917 },  // Tokyo, Japan
-  { lat: 37.5665, lng: 126.9780 },  // Seoul, South Korea
-  { lat: 39.9042, lng: 116.4074 },  // Beijing, China
-  { lat: 31.2304, lng: 121.4737 },  // Shanghai, China
-  { lat: 13.7563, lng: 100.5018 },  // Bangkok, Thailand
-  { lat: 1.3521, lng: 103.8198 },   // Singapore
-  { lat: 19.0760, lng: 72.8777 },   // Mumbai, India
-  { lat: 28.6139, lng: 77.2090 },   // New Delhi, India
-
+  { lat: 35.6895, lng: 139.6917 }, // Tokyo, Japan
+  { lat: 37.5665, lng: 126.9780 }, // Seoul, South Korea
+  { lat: 39.9042, lng: 116.4074 }, // Beijing, China
+  { lat: 31.2304, lng: 121.4737 }, // Shanghai, China
+  { lat: 13.7563, lng: 100.5018 }, // Bangkok, Thailand
+  { lat: 1.3521, lng: 103.8198 }, // Singapore
+  { lat: 19.0760, lng: 72.8777 }, // Mumbai, India
+  { lat: 28.6139, lng: 77.2090 }, // New Delhi, India
   // ამერიკა
-  { lat: 40.7128, lng: -74.0060 },  // New York, USA
+  { lat: 40.7128, lng: -74.0060 }, // New York, USA
   { lat: 34.0522, lng: -118.2437 }, // Los Angeles, USA
   { lat: 37.7749, lng: -122.4194 }, // San Francisco, USA
-  { lat: 41.8781, lng: -87.6298 },  // Chicago, USA
-  { lat: 43.6532, lng: -79.3832 },  // Toronto, Canada
-  { lat: 19.4326, lng: -99.1332 },  // Mexico City, Mexico
+  { lat: 41.8781, lng: -87.6298 }, // Chicago, USA
+  { lat: 43.6532, lng: -79.3832 }, // Toronto, Canada
+  { lat: 19.4326, lng: -99.1332 }, // Mexico City, Mexico
   { lat: -23.5505, lng: -46.6333 }, // Sao Paulo, Brazil
   { lat: -34.6037, lng: -58.3816 }, // Buenos Aires, Argentina
-
   // ავსტრალია / ოკეანია
   { lat: -33.8688, lng: 151.2093 }, // Sydney, Australia
   { lat: -37.8136, lng: 144.9631 }, // Melbourne, Australia
-
   // ახლო აღმოსავლეთი / აფრიკა
-  { lat: 25.2048, lng: 55.2708 },   // Dubai, UAE
-  { lat: 30.0444, lng: 31.2357 },   // Cairo, Egypt
-  { lat: -26.2041, lng: 28.0473 },  // Johannesburg, South Africa
-
+  { lat: 25.2048, lng: 55.2708 }, // Dubai, UAE
+  { lat: 30.0444, lng: 31.2357 }, // Cairo, Egypt
+  { lat: -26.2041, lng: 28.0473 }, // Johannesburg, South Africa
   // საქართველო და რეგიონი
-  { lat: 41.7151, lng: 44.8271 },   // Tbilisi, Georgia
-  { lat: 41.6500, lng: 44.7833 },   // Rustavi, Georgia
-  { lat: 42.2710, lng: 42.7010 },   // Kutaisi, Georgia
-  { lat: 41.6539, lng: 41.6418 },   // Batumi, Georgia
-  { lat: 40.1872, lng: 44.5152 },   // Yerevan, Armenia
-  { lat: 43.2389, lng: 76.8897 },   // Almaty, Kazakhstan
-  { lat: 41.0082, lng: 28.9784 },   // Istanbul, Turkey
-
+  { lat: 41.7151, lng: 44.8271 }, // Tbilisi, Georgia
+  { lat: 41.6500, lng: 44.7833 }, // Rustavi, Georgia
+  { lat: 42.2710, lng: 42.7010 }, // Kutaisi, Georgia
+  { lat: 41.6539, lng: 41.6418 }, // Batumi, Georgia
+  { lat: 40.1872, lng: 44.5152 }, // Yerevan, Armenia
+  { lat: 43.2389, lng: 76.8897 }, // Almaty, Kazakhstan
+  { lat: 41.0082, lng: 28.9784 }, // Istanbul, Turkey
   // დამატებითი პოპულარული ადგილები
-  { lat: 25.7617, lng: -80.1918 },  // Miami, USA
-  { lat: 22.3193, lng: 114.1694 },  // Hong Kong
-  { lat: 14.5995, lng: 120.9842 },  // Manila, Philippines
-  { lat: 36.2048, lng: 138.2529 },  // Japan (გენერალური ოფსეტი)
+  { lat: 25.7617, lng: -80.1918 }, // Miami, USA
+  { lat: 22.3193, lng: 114.1694 }, // Hong Kong
+  { lat: 14.5995, lng: 120.9842 }, // Manila, Philippines
+  { lat: 36.2048, lng: 138.2529 }, // Japan (გენერალური ოფსეტი)
 ];
-
 function startRound(num){
   if(!svService) return setTimeout(() => startRound(num), 1000);
-
-  // შემთხვევით გადაწყვეტა: 80% დასახლებული, 20% უკაცრიელი
   const isPopulated = Math.random() < 0.8;
-
   let pos;
   if (isPopulated) {
-    // დასახლებული: აირჩიე შემთხვევით ქალაქი
     const city = populatedLocations[Math.floor(Math.random() * populatedLocations.length)];
-    // ქალაქის ირგვლივ შემთხვევითი წერტილი (რომ არ იყოს ზუსტად ცენტრი)
-    const offsetLat = (Math.random() * 0.5) - 0.25; // ±0.25 გრადუსი (~28კმ)
+    const offsetLat = (Math.random() * 0.5) - 0.25;
     const offsetLng = (Math.random() * 0.5) - 0.25;
     pos = { lat: city.lat + offsetLat, lng: city.lng + offsetLng };
   } else {
-    // უკაცრიელი: შემთხვევითი გლობალური
     pos = { lat: (Math.random()*140)-70, lng: (Math.random()*360)-180 };
   }
-
-  // Street View-ის მიღება (რადიუსი გავზარდეთ 100კმ-მდე, რომ უფრო სწრაფად იპოვოს)
   svService.getPanorama({location: pos, radius: 100000, source: google.maps.StreetViewSource.OUTDOOR}, async (d, s) => {
     if (s === "OK") {
       db.ref(`rooms/${roomId}/game`).update({
@@ -338,7 +345,7 @@ function startRound(num){
         meta: { phase: "guess", currentRound: num, deadline: Date.now() + 60000 },
         guesses: null
       });
-    } else startRound(num); // თუ არ იპოვა — გაიმეორე
+    } else startRound(num);
   });
 }
 function userSubmit(auto){
@@ -353,39 +360,31 @@ function userSubmit(auto){
     if (score >= 4000) createFireworks();
   }
   db.ref(`rooms/${roomId}/players/${userData.uid}/points`).transaction(c => (c||0) + score);
- 
-  // ვინახავთ მიმდინარე რაუნდისთვის
   const guessData = {score: score, lat: lat, lng: lng};
   db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set(guessData);
- 
-  // ვინახავთ ისტორიაში (შემდგომი ჩვენებისთვის)
   db.ref(`rooms/${roomId}/history/round_${currentRound}/${userData.uid}`).set(guessData);
-  // აქვე ვინახავთ ამ რაუნდის სწორ პასუხსაც, რომ მერე რუკამ იცოდეს სად გაავლოს ხაზები
   db.ref(`rooms/${roomId}/history/round_${currentRound}/correct`).set({lat: correct.lat, lng: correct.lng});
 }
 async function showReveal(){
   const [gSnap, pSnap] = await Promise.all([db.ref(`rooms/${roomId}/game/guesses`).once("value"), db.ref(`rooms/${roomId}/players`).once("value")]);
   const guesses = gSnap.val() || {}, players = pSnap.val() || {};
   const cLoc = {lat: correct.lat, lng: correct.lng};
- 
   correctMarker = new google.maps.Marker({ position: cLoc, map: map, zIndex: 1000, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 10, fillColor: "#22c55e", fillOpacity: 1, strokeColor: "white", strokeWeight: 2 } });
-  roundMarkers.push(correctMarker); // ვამატებთ წასაშლელების სიაში
+  roundMarkers.push(correctMarker);
   const bounds = new google.maps.LatLngBounds(); bounds.extend(cLoc);
- 
   Object.keys(guesses).forEach(uid => {
     const g = guesses[uid], p = players[uid];
     if (g.lat && g.lng) {
       const pLoc = {lat: g.lat, lng: g.lng}; bounds.extend(pLoc);
-     
       const m = new google.maps.Marker({
         position: pLoc,
         map: map,
         label: { text: `${p.avatar || '👤'} ${p.name}`, className: "player-map-label" },
         icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
       });
-      roundMarkers.push(m); // ვამატებთ მოთამაშის მარკერს
+      roundMarkers.push(m);
       const line = new google.maps.Polyline({ path: [cLoc, pLoc], map: map, strokeColor: "#ef4444", strokeOpacity: 0.5, strokeWeight: 2 });
-      roundMarkers.push(line); // ვამატებთ ხაზს
+      roundMarkers.push(line);
     }
     if (uid === userData.uid) { $("res-score").innerText = `+${g.score || 0} ქულა`; $("result-popup").style.display = "block"; }
   });
@@ -397,9 +396,8 @@ async function finishGame() {
     const players = Object.values(snap.val() || {}).sort((a,b) => b.points - a.points);
     $("winner-name").innerText = "🏆 გამარჯვებული: " + (players[0]?.name || "---");
     $("final-stats").innerHTML = players.map(p => `<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:700;"><span>${p.avatar || '👤'} ${p.name}</span><span style="color:var(--accent-green)">${p.points} ქულა</span></div>`).join("");
-   
     updateGlobalLeaderboard();
-    showFinalHistoryMap(); // აი ეს ფუნქცია დახატავს ყველაფერს
+    showFinalHistoryMap();
 }
 async function updateGlobalLeaderboard() {
   const playersSnap = await db.ref(`rooms/${roomId}/players`).once("value");
@@ -440,26 +438,23 @@ function exitGame(){ location.reload(); }
 async function showFinalHistoryMap() {
     const historySnap = await db.ref(`rooms/${roomId}/history`).once("value");
     if (!historySnap.exists()) return;
-   
+  
     const history = historySnap.val();
     const playersSnap = await db.ref(`rooms/${roomId}/players`).once("value");
     const players = playersSnap.val() || {};
-   
+  
     const bounds = new google.maps.LatLngBounds();
-   
-    // გადავუყვეთ ყველა რაუნდს ისტორიაში
+  
     Object.keys(history).forEach(roundKey => {
         const roundData = history[roundKey];
         const cLoc = roundData.correct;
         if (!cLoc) return;
         bounds.extend(new google.maps.LatLng(cLoc.lat, cLoc.lng));
-        // დავსვათ სწორი პასუხის პატარა წერტილი
         new google.maps.Marker({
             position: cLoc,
             map: map,
             icon: { path: google.maps.SymbolPath.CIRCLE, scale: 4, fillColor: "#22c55e", fillOpacity: 0.8, strokeColor: "white", strokeWeight: 1 }
         });
-        // გამოვაჩინოთ თითოეული მოთამაშის მონიშვნა ამ რაუნდში
         Object.keys(roundData).forEach(uid => {
             if (uid === 'correct') return;
             const g = roundData[uid];
@@ -467,14 +462,12 @@ async function showFinalHistoryMap() {
             if (g.lat && g.lng) {
                 const pLoc = {lat: g.lat, lng: g.lng};
                 bounds.extend(new google.maps.LatLng(g.lat, g.lng));
-                // მოთამაშის წერტილი (პატარა, რომ რუკა არ გადაიტვირთოს)
                 new google.maps.Marker({
                     position: pLoc,
                     map: map,
                     title: `${p.name} (რაუნდი ${roundKey.split('_')[1]})`,
                     icon: { path: google.maps.SymbolPath.CIRCLE, scale: 3, fillColor: "#ef4444", fillOpacity: 0.6, strokeColor: "white", strokeWeight: 1 }
                 });
-                // გავავლოთ ძალიან თხელი ხაზი
                 new google.maps.Polyline({
                     path: [cLoc, pLoc],
                     map: map,
@@ -485,7 +478,6 @@ async function showFinalHistoryMap() {
             }
         });
     });
-   
+  
     map.fitBounds(bounds);
 }
-
