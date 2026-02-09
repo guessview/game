@@ -617,3 +617,16 @@ h1 {
   border-color: #4caf50;
   color: white;
 }
+#lang-switcher {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  gap: 10px;
+}
+
+/* თამაშის დროს დავმალოთ */
+body.game-active #lang-switcher {
+  display: none !important;
+}
