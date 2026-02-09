@@ -217,6 +217,30 @@ function bindListeners(){
       $("chat-messages").innerHTML += `<div class="chat-msg"><span>${m.avatar || ''}</span> <b>${m.user}:</b> ${m.text}</div>`;
       $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
   });
+
+  // აი ეს არის მთავარი დამატება, რომელიც 3+ მოთამაშეზე ჭედვას შველის:
+  db.ref(`rooms/${roomId}/game/guesses`).on("value", async (snap) => {
+    if (phase !== "guess") return;
+    const guesses = snap.val() || {};
+    const pSnap = await db.ref(`rooms/${roomId}/players`).once("value");
+    const players = pSnap.val() || {};
+    const gCount = Object.keys(guesses).length;
+    const pCount = Object.keys(players).length;
+
+    if (gCount >= pCount && pCount > 0) {
+      // მხოლოდ პირველი მოთამაშე ააქტიურებს გადასვლას, რომ დუბლირება არ მოხდეს
+      if (Object.keys(players)[0] === userData.uid) {
+        db.ref(`rooms/${roomId}/game/meta`).update({ phase: "reveal", deadline: Date.now() + 6000 });
+      }
+    }
+  });
+}
+
+  db.ref(`rooms/${roomId}/chat`).on("child_added", snap => {
+      const m = snap.val();
+      $("chat-messages").innerHTML += `<div class="chat-msg"><span>${m.avatar || ''}</span> <b>${m.user}:</b> ${m.text}</div>`;
+      $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
+  });
 }
 
 function sendChatMessage(){
@@ -316,14 +340,7 @@ function userSubmit(auto){
   }
   db.ref(`rooms/${roomId}/players/${userData.uid}/points`).transaction(c => (c||0) + score);
   db.ref(`rooms/${roomId}/game/guesses/${userData.uid}`).set({score});
-  checkAllIn();
-}
-
-async function checkAllIn(){
-  const [p, g] = await Promise.all([db.ref(`rooms/${roomId}/players`).once("value"), db.ref(`rooms/${roomId}/game/guesses`).once("value")]);
-  if (Object.keys(g.val()||{}).length >= Object.keys(p.val()||{}).length && phase === "guess") {
-    db.ref(`rooms/${roomId}/game/meta`).update({ phase: "reveal", deadline: Date.now() + 6000 });
-  }
+  // checkAllIn(); <-- ეს ხაზი წაშლილია, რადგან აღარ გვჭირდება
 }
 
 function showReveal(){
@@ -413,5 +430,6 @@ async function restartGame() {
     await db.ref().update(updates);
     if($("final-screen")) $("final-screen").style.display = "none";
 }
+
 
 function exitGame(){ location.reload(); }
