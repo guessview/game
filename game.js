@@ -338,7 +338,6 @@ function userSubmit(auto){
 }
 
 async function showReveal(){
-  // 1. წამოვიღოთ ყველა მოთამაშის მონიშვნა ამ რაუნდისთვის
   const guessesSnap = await db.ref(`rooms/${roomId}/game/guesses`).once("value");
   const playersSnap = await db.ref(`rooms/${roomId}/players`).once("value");
   const guesses = guessesSnap.val() || {};
@@ -346,7 +345,7 @@ async function showReveal(){
   
   const cLoc = {lat: correct.lat, lng: correct.lng};
   
-  // 2. დავსვათ სწორი ლოკაციის მარკერი (მწვანე)
+  // სწორი ლოკაციის მარკერი (მწვანე)
   correctMarker = new google.maps.Marker({ 
     position: cLoc, 
     map: map, 
@@ -357,7 +356,6 @@ async function showReveal(){
   const bounds = new google.maps.LatLngBounds();
   bounds.extend(cLoc);
 
-  // 3. გამოვაჩინოთ თითოეული მოთამაშის მონიშნული წერტილი
   Object.keys(guesses).forEach(uid => {
     const g = guesses[uid];
     const p = players[uid];
@@ -366,16 +364,25 @@ async function showReveal(){
       const pLoc = {lat: g.lat, lng: g.lng};
       bounds.extend(pLoc);
 
-      // დავსვათ მოთამაშის მარკერი (წითელი წერტილი ან მისი ავატარი)
+      // ლამაზი მარკერი სახელით და ავატარით
+      const labelText = `${p.avatar || '👤'} ${p.name}`;
+      
       new google.maps.Marker({
         position: pLoc,
         map: map,
-        label: { text: p.avatar || '👤', fontSize: '16px' },
-        title: p.name,
-        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 6, fillColor: "#ef4444", fillOpacity: 0.8, strokeColor: "white", strokeWeight: 1 }
+        label: {
+          text: labelText,
+          color: "white",
+          fontSize: "12px",
+          fontWeight: "bold",
+          className: "player-map-label" // CSS-ისთვის
+        },
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 0 // ნამდვილ იკონკას ვმალავთ, მხოლოდ ლეიბლი გვინდა
+        }
       });
 
-      // გავავლოთ ხაზი სწორ წერტილამდე
       new google.maps.Polyline({ 
         path: [cLoc, pLoc], 
         map: map, 
@@ -384,6 +391,15 @@ async function showReveal(){
         strokeWeight: 2 
       });
     }
+    
+    if (uid === userData.uid) {
+      $("res-score").innerText = `+${g.score || 0} ქულა`;
+      $("result-popup").style.display = "block";
+    }
+  });
+
+  map.fitBounds(bounds);
+}
     
     // თქვენი საკუთარი ქულის ჩვენება პოპაპში
     if (uid === userData.uid) {
@@ -465,4 +481,5 @@ async function restartGame() {
 }
 
 function exitGame(){ location.reload(); }
+
 
