@@ -45,42 +45,44 @@
     </div>
   </div>
 
-  <!-- Edit Options Popup -->
-  <div id="edit-options-popup" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center;">
-    <div style="background:#1e293b; border-radius:16px; padding:32px; max-width:400px; width:90%; color:white;">
-      <h3 style="margin:0 0 20px; font-size:24px; color:#fbbf24;">Edit Options</h3>
+<!-- Edit Options Popup -->
+<div id="edit-options-popup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:3000; color:white; font-family:Inter, sans-serif; align-items:center; justify-content:center;">
+  <div style="background:#1a1a1a; border-radius:16px; padding:32px; max-width:400px; width:90%; position:relative; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+    <button onclick="closeEditOptions()" style="position:absolute; top:12px; right:12px; background:none; border:none; color:#9ca3af; font-size:24px; cursor:pointer;">×</button>
 
-      <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Number of rounds</label>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
-        <button onclick="changeOption('rounds', -1)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">-</button>
-        <input id="options-rounds" type="number" value="5" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; text-align:center; width:60px;" min="1" max="50">
-        <button onclick="changeOption('rounds', 1)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">+</button>
-      </div>
+    <h3 style="margin:0 0 20px; font-size:24px; color:#fbbf24;">Edit Options</h3>
 
-      <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Time per round (seconds)</label>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
-        <button onclick="changeOption('time', -10)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">-</button>
-        <input id="options-time" type="number" value="30" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; text-align:center; width:60px;" min="10" max="300" step="10">
-        <button onclick="changeOption('time', 10)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">+</button>
-      </div>
-
-      <label style="display:flex; align-items:center; gap:12px; margin-bottom:20px; font-size:16px; color:#9ca3af;">
-        <input id="options-no-move" type="checkbox" style="width:20px; height:20px;">
-        No moving, panning, zooming
-      </label>
-
-      <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Map</label>
-      <select id="options-map" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; width:100%; margin-bottom:20px;">
-        <option value="World">World</option>
-        <option value="Europe">Europe</option>
-        <option value="Asia">Asia</option>
-        <option value="America">America</option>
-        <option value="Georgia">Georgia</option>
-      </select>
-
-      <button onclick="savePrivateOptions()" style="background:#4ade80; border:none; color:black; padding:12px; border-radius:12px; width:100%; font-weight:600; cursor:pointer;">Save</button>
+    <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Number of rounds</label>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+      <button onclick="changeOption('rounds', -1)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">-</button>
+      <input id="options-rounds" type="number" value="15" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; text-align:center; width:60px;" min="1" max="50">
+      <button onclick="changeOption('rounds', 1)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">+</button>
     </div>
+
+    <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Time per round (seconds)</label>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+      <button onclick="changeOption('time', -10)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">-</button>
+      <input id="options-time" type="number" value="60" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; text-align:center; width:60px;" min="10" max="300" step="10">
+      <button onclick="changeOption('time', 10)" style="background:#2a2a2a; border:none; color:white; padding:8px 12px; border-radius:6px;">+</button>
+    </div>
+
+    <label style="display:flex; align-items:center; gap:12px; margin-bottom:20px; font-size:16px; color:#9ca3af;">
+      <input id="options-no-move" type="checkbox" style="width:20px; height:20px;">
+      No moving, panning, zooming
+    </label>
+
+    <label style="display:block; margin-bottom:8px; font-size:16px; color:#9ca3af;">Map</label>
+    <select id="options-map" style="background:#2a2a2a; border:none; color:white; padding:8px; border-radius:6px; width:100%; margin-bottom:20px;">
+      <option value="World">World</option>
+      <option value="Europe">Europe</option>
+      <option value="Asia">Asia</option>
+      <option value="America">America</option>
+      <option value="Georgia">Georgia</option>
+    </select>
+
+    <button onclick="savePrivateOptions()" style="background:#fbbf24; border:none; color:black; padding:12px; border-radius:12px; width:100%; font-weight:600; cursor:pointer;">Save</button>
   </div>
+</div>
 
   <div id="overlay">
     <!-- ენის გადამრთველი -->
@@ -104,21 +106,30 @@
           <button class="btn" onclick="loginWithGoogle()" data-i18n="login_google">Google-ით შესვლა</button>
         </div>
      
-        <div id="post-auth" style="display:none;">
-          <div class="label" data-i18n="nickname_label">მოთამაშის სახელი</div>
-          <input class="field" id="nickname" placeholder="მაგ: Ivane" maxlength="15" data-i18n-placeholder="nickname_placeholder" />
-       
-          <div class="menu-buttons">
-            <button onclick="quickPlay()" class="btn matchmaking">
-                <span>🎮</span> <span data-i18n="quick_play">Quick Play</span>
-            </button>
-            <button onclick="findMatch()" class="btn matchmaking">
-                <span>🔍</span> <span data-i18n="find_match">Find a Match (Join)</span>
-            </button>
-            <button onclick="createPrivateRoom()" class="btn secondary">
-                <span>🔒</span> <span data-i18n="private_room">Private Room</span>
-            </button>
-          </div>
+<div id="post-auth" style="display:none;">
+  <div class="label" data-i18n="nickname_label">მოთამაშის სახელი</div>
+  <input class="field" id="nickname" placeholder="მაგ: Ivane" maxlength="15" data-i18n-placeholder="nickname_placeholder" />
+
+  <div class="menu-buttons">
+    <button onclick="quickPlay()" class="btn matchmaking">
+        <span>🎮</span> <span data-i18n="quick_play">Quick Play</span>
+    </button>
+    <button onclick="findMatch()" class="btn matchmaking">
+        <span>🔍</span> <span data-i18n="find_match">Find a Match (Join)</span>
+    </button>
+    <button onclick="createPrivateRoom()" class="btn secondary">
+        <span>🔒</span> <span data-i18n="private_room">Private Room</span>
+    </button>
+  </div>
+
+  <button class="btn bad" style="margin-top:20px; opacity:0.6;" onclick="logout()" data-i18n="logout">გამოსვლა</button>
+  <div class="premium-donate-section">
+    <p style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 15px;" data-i18n="like_game">მოგწონს თამაში? ❤️</p>
+    <a href="https://egreve.bog.ge/gamocnobie" target="_blank" class="bog-premium-btn">
+      <span style="font-size: 20px;">☕</span> <span data-i18n="support_donate">მხარდაჭერა / დონაცია</span>
+    </a>
+  </div>
+</div>
        
           <input class="field" id="room-code-input" placeholder="კოდი მეგობრისგან (მაგ: A2K9XZ)" style="margin-top:10px;" data-i18n-placeholder="room_code_placeholder" />
           <button class="btn secondary" onclick="joinPrivateRoom()" data-i18n="join_code">შესვლა კოდით</button>
@@ -218,3 +229,4 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA2RW92fLioq_fTquHZgZcj5MJ3izDLA10&callback=onGoogleMapsLoaded&loading=async" async defer></script>
 </body>
 </html>
+
