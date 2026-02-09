@@ -692,3 +692,24 @@ body.game-active #lang-switcher {
 #lobby-start-btn:not(:disabled):hover {
   background: #16a34a;
 }
+/* Private Room Lobby - GuessView სტილი */
+#private-lobby > div {
+  background: #1e1e1e;
+  border-radius: 16px;
+  padding: 32px;
+}
+
+#private-lobby h2 {
+  color: #f5a623;
+}
+
+#private-lobby button {
+  border-radius: 8px;
+}
+
+/* Edit Options Popup */
+#edit-options-popup > div {
+  background: #1e1e1e;
+  border-radius: 16px;
+  padding: 32px;
+}
