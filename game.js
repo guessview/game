@@ -105,7 +105,6 @@ async function findMatch() {
   }
   joinRoom(target);
 }
-
 // ✅ განახლებული createPrivateRoom — რაუნდების არჩევა
 async function createPrivateRoom(){
   if(!userData) return;
@@ -116,16 +115,17 @@ async function createPrivateRoom(){
   const selectedRounds = parseInt(document.getElementById('private-rounds-select')?.value) || 15;
 
   const target = Math.random().toString(36).substring(2,8).toUpperCase();
-  await db.ref(`rooms/${target}/meta`).set({ 
-    matchmaking: false, 
-    createdAt: Date.now(), 
+  
+  await db.ref(`rooms/${target}/meta`).set({
+    matchmaking: false,
+    createdAt: Date.now(),
     phase: "idle",
-    rounds: selectedRounds,          // ახალი ველი
+    rounds: selectedRounds,          // ახალი ველი — მაქსიმალური რაუნდები
     currentRound: 0
   });
+  
   joinRoom(target);
 }
-
 function joinPrivateRoom(){ const code = $("room-code-input").value.toUpperCase(); if(code) joinRoom(code); }
 async function joinRoom(id){
   roomId = id; nickname = $("nickname").value || "Player";
@@ -134,11 +134,23 @@ async function joinRoom(id){
   db.ref(`rooms/${roomId}/players/${userData.uid}`).onDisconnect().remove();
   $("overlay").style.display = "none"; $("container").style.display = "block";
   $("ui").style.display = "flex"; $("scoreboard").style.display = "flex"; $("chat-panel").style.display = "flex";
+  
+  // მეტა-დან მაქსიმალური რაუნდების წაკითხვა და round-display-ის განახლება
   const roomMeta = await db.ref(`rooms/${roomId}/meta`).once('value');
-  if(roomMeta.exists() && roomMeta.val().matchmaking === false) {
-      $('room-code-display').style.display = 'block';
-      $('room-code-text').innerText = roomId;
+  if(roomMeta.exists()) {
+      const meta = roomMeta.val();
+      if(meta.matchmaking === false) {
+          $('room-code-display').style.display = 'block';
+          $('room-code-text').innerText = roomId;
+          
+          // თუ private room-ია — ვაჩვენებთ რაუნდების რაოდენობას
+          const maxRounds = meta.rounds || 15;
+          if($('round-display')) {
+              $('round-display').innerText = `რაუნდი: ${currentRound || 1} / ${maxRounds}`;
+          }
+      }
   }
+  
   makeDraggable($('ui')); makeDraggable($('scoreboard')); makeDraggable($('chat-panel'));
   initMaps(); bindListeners(); ensureGame();
 }
@@ -146,7 +158,6 @@ function initMaps(){
   if (panorama) return;
   panorama = new google.maps.StreetViewPanorama($("street-view"), { addressControl: false, showRoadLabels: false, visible: false });
   map = new google.maps.Map($("map"), { center: {lat:20, lng:0}, zoom:2, disableDefaultUI: true });
-  // 2. რუკის ზომის ცვლილების მოსმენა (აღდგენილია)
   new ResizeObserver(() => google.maps.event.trigger(map, 'resize')).observe($("map-wrapper"));
   map.addListener("click", e => {
     if (phase !== "guess" || submittedRound === currentRound) return;
@@ -162,20 +173,19 @@ function bindListeners(){
     const arr = Object.values(p).sort((a,b) => b.points - a.points);
     $("score-list").innerHTML = arr.map(i => `<div class="player-row"><div class="player-info"><span>${i.avatar || '👤'}</span><span>${i.name}</span></div><b>${i.points}</b></div>`).join("");
   });
- 
   db.ref(`rooms/${roomId}/game`).on("value", snap => {
     const data = snap.val() || {};
     const newPhase = data.meta?.phase || "idle";
     currentRound = data.meta?.currentRound || 1;
     deadline = data.meta?.deadline || 0; correct = data.state;
-   
+  
     db.ref(`rooms/${roomId}/meta`).once('value').then(m => {
         const meta = m.val() || {};
-        const maxRounds = meta.rounds || 15;  // ✅ ახალი: მაქსიმალური რაუნდები
-
-        // ✅ განახლებული round-display
+        const maxRounds = meta.rounds || 15;
+        
+        // განახლებული round-display — აჩვენებს მაქსიმალურ რაუნდებს
         $("round-display").innerText = `რაუნდი: ${currentRound} / ${maxRounds}`;
-
+        
         if(newPhase === "idle" && meta.matchmaking === false) {
             $('manual-start-btn').style.display = 'block';
         } else {
@@ -213,6 +223,7 @@ function addEmoji(emoji) {
 }
 function handlePhaseChange(){
   if (phase === "guess") {
+    // წინა რაუნდის მარკერების და ხაზების წაშლა რუკიდან
     roundMarkers.forEach(m => m.setMap(null));
     roundMarkers = [];
     submittedRound = 0; selectedLatLng = null; $("guess-btn").disabled = true; $("guess-btn").style.display = "block"; $("waiting-msg").style.display = "none";
@@ -229,14 +240,14 @@ function handlePhaseChange(){
     if (submittedRound < currentRound) userSubmit(true);
     showReveal();
     setTimeout(async () => {
-      // ✅ ახალი ლოგიკა: maxRounds meta-დან
+      // ახალი ლოგიკა: maxRounds meta-დან (private room-ისთვის)
       const metaSnap = await db.ref(`rooms/${roomId}/meta`).once('value');
       const meta = metaSnap.val() || {};
       const maxRounds = meta.rounds || 15;
 
       if(currentRound < maxRounds) {
-          db.ref(`rooms/${roomId}/players`).limitToFirst(1).once("value", s => { 
-            if(Object.keys(s.val())[0] === userData.uid) startRound(currentRound + 1); 
+          db.ref(`rooms/${roomId}/players`).limitToFirst(1).once("value", s => {
+            if(Object.keys(s.val())[0] === userData.uid) startRound(currentRound + 1);
           });
       } else {
           db.ref(`rooms/${roomId}/game/meta/phase`).set("finished");
@@ -438,13 +449,13 @@ function exitGame(){ location.reload(); }
 async function showFinalHistoryMap() {
     const historySnap = await db.ref(`rooms/${roomId}/history`).once("value");
     if (!historySnap.exists()) return;
-  
+ 
     const history = historySnap.val();
     const playersSnap = await db.ref(`rooms/${roomId}/players`).once("value");
     const players = playersSnap.val() || {};
-  
+ 
     const bounds = new google.maps.LatLngBounds();
-  
+ 
     Object.keys(history).forEach(roundKey => {
         const roundData = history[roundKey];
         const cLoc = roundData.correct;
@@ -478,6 +489,6 @@ async function showFinalHistoryMap() {
             }
         });
     });
-  
+ 
     map.fitBounds(bounds);
 }
